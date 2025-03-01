@@ -1,27 +1,15 @@
 import chalk from 'chalk';
 import { RequestTracker } from './request-tracker';
-
+import { LEVEL_LABELS, LEVEL_COLORS, BOX_WIDTH } from '../constants/logger';
 export class CustomLogger {
   private context: string;
-  private static readonly LEVEL_COLORS = {
-    log: chalk.green,
-    error: chalk.red,
-    warn: chalk.yellow,
-    debug: chalk.blue,
-    verbose: chalk.cyan,
-  };
+  private static readonly LEVEL_COLORS = LEVEL_COLORS;
 
-  private static readonly BOX_WIDTH = 80;
+  private static readonly BOX_WIDTH = BOX_WIDTH;
 
   private static readonly ENDING_LINE_WIDTH = this.BOX_WIDTH * 2;
 
-  private static readonly LEVEL_LABELS = {
-    log: 'SUCCESS',
-    error: 'ERROR',
-    warn: 'WARNING',
-    debug: 'INFO',
-    verbose: 'VERBOSE',
-  };
+  private static readonly LEVEL_LABELS = LEVEL_LABELS;
 
   private requestTracker: RequestTracker;
 

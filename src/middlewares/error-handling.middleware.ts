@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { CustomLogger } from '../utils/custom-logger';
 import { RequestTracker } from '../utils/request-tracker';
-
+import { ERROR_MESSAGE } from '../constants/messages';
 // Create a logger instance for errors
 const errorLogger = new CustomLogger('Error');
 const requestTracker = RequestTracker.getInstance();
@@ -36,7 +36,7 @@ export const errorHandlingMiddleware = (err: Error, req: Request, res: Response,
   
   // Log the error
   errorLogger.error({
-    message: `Request Error`,
+    message: ERROR_MESSAGE,
     requestId,
     timestamp: new Date().toISOString(),
     method: req.method,
@@ -50,14 +50,9 @@ export const errorHandlingMiddleware = (err: Error, req: Request, res: Response,
   });
   
   // Send error response to client
-  res.status(res.statusCode || 500).json({
-    message: err.message || 'Internal Server Error',
-    error: process.env.NODE_ENV === 'production' ? undefined : {
-      name: err.name,
-      stack: err.stack
-    },
-    timestamp: new Date().toISOString(),
-    path: req.originalUrl
+  res.status(500).json({
+    message: err.message || ERROR_MESSAGE,
+    timestamp: new Date().toISOString()
   });
 };
 

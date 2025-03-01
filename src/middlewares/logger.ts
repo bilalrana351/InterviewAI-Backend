@@ -3,7 +3,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { CustomLogger } from '../utils/custom-logger';
 import { RequestTracker } from '../utils/request-tracker';
 import onFinished from 'on-finished';
-
+import { CLIENT_ERROR_LOG_LEVEL, DEBUG_LOG_LEVEL, SERVER_ERROR_LOG_LEVEL, SUCCESS_LOG_LEVEL } from '../constants/logger';
+import { ERROR_MESSAGE } from '../constants/messages';
 // Create a logger instance for HTTP requests
 const httpLogger = new CustomLogger('HTTP');
 const requestTracker = RequestTracker.getInstance();
@@ -12,10 +13,10 @@ const requestTracker = RequestTracker.getInstance();
  * Get the appropriate color based on status code
  */
 function getStatusColor(statusCode: number): string {
-  if (statusCode >= 500) return 'error';
-  if (statusCode >= 400) return 'warn';
-  if (statusCode >= 300) return 'debug';
-  return 'log';
+  if (statusCode >= 500) return SERVER_ERROR_LOG_LEVEL;
+  if (statusCode >= 400) return CLIENT_ERROR_LOG_LEVEL;
+  if (statusCode >= 300) return DEBUG_LOG_LEVEL;
+  return SUCCESS_LOG_LEVEL;
 }
 
 // Middleware to log HTTP requests and responses
@@ -74,31 +75,6 @@ export const loggingMiddleware = (req: Request, res: Response, next: NextFunctio
     const responseTime = Date.now() - startTime;
     const statusCode = res.statusCode;
     
-    // Update request tracker with status code
-    const request = requestTracker.getRequest(requestId);
-    if (request) {
-      request.statusCode = statusCode;
-    }
-    
-    if (err) {
-      // Update request tracker with error
-      if (request) {
-        request.error = err;
-      }
-      
-      httpLogger.error({
-        message: `Request Error`,
-        requestId,
-        timestamp: new Date().toISOString(),
-        statusCode,
-        responseTime: `${responseTime}ms`,
-        error: {
-          name: err.name,
-          message: err.message,
-          stack: err.stack,
-        },
-      });
-    } else {
       // Determine log level based on status code
       const logLevel = getStatusColor(statusCode);
       
@@ -117,21 +93,20 @@ export const loggingMiddleware = (req: Request, res: Response, next: NextFunctio
       
       // Log with the appropriate level based on status code
       switch (logLevel) {
-        case 'error':
+        case SERVER_ERROR_LOG_LEVEL:
           httpLogger.error(responseData);
           break;
-        case 'warn':
+        case CLIENT_ERROR_LOG_LEVEL:
           httpLogger.warn(responseData);
           break;
-        case 'debug':
+        case DEBUG_LOG_LEVEL:
           httpLogger.debug(responseData);
           break;
-        case 'log':
+        case SUCCESS_LOG_LEVEL:
         default:
           httpLogger.log(responseData);
           break;
       }
-    }
   });
 
   // Clean up old requests periodically (every 100 requests)
@@ -142,8 +117,5 @@ export const loggingMiddleware = (req: Request, res: Response, next: NextFunctio
   next();
 };
 
-// Export all middleware for easy access
-export { errorHandlingMiddleware } from './error-handling.middleware';
-export { notFoundMiddleware } from './not-found.middleware';
 
 export default loggingMiddleware;
