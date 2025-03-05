@@ -15,8 +15,9 @@ interface SupabaseAuthUser {
  * Create a new user from Supabase auth.users
  */
 export const createUser = asyncErrorHandler(async (req: Request, res: Response) => {
-  const authUser = req.body as SupabaseAuthUser;
   console.log('I am in the create user controller build for supabase');
+  const authUser = req.body as SupabaseAuthUser;
+  console.log('I am here for the authUser', authUser);
   // Validate webhook data
   if (!authUser?.email) {
     return res.status(400).json({
