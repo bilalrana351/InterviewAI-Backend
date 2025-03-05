@@ -16,7 +16,7 @@ interface SupabaseAuthUser {
  */
 export const createUser = asyncErrorHandler(async (req: Request, res: Response) => {
   const authUser = req.body as SupabaseAuthUser;
-
+  console.log('I am in the create user controller build for supabase');
   // Validate webhook data
   if (!authUser?.email) {
     return res.status(400).json({
@@ -24,7 +24,6 @@ export const createUser = asyncErrorHandler(async (req: Request, res: Response) 
       message: 'Email is required in payload'
     });
   }
-
   const { email, raw_user_meta_data } = authUser;
   // Default to 'candidate' if role is not present in meta data
   const role = raw_user_meta_data?.role || 'candidate';

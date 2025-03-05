@@ -32,7 +32,7 @@ app.get("/error", (req: express.Request, res: express.Response) => {
 // Database health check endpoint
 app.get("/health/db", async (req: express.Request, res: express.Response) => {
   const isConnected = databaseService.isConnectedToMongoDB();
-  
+  console.log('I am in the health check endpoint');
   if (isConnected) {
     return res.status(200).json({ 
       status: 'ok',
