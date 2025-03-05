@@ -9,32 +9,11 @@ const UserSchema = new Schema(
       trim: true,
       lowercase: true
     },
-    firstName: {
-      type: String,
-      required: true,
-      trim: true
-    },
-    lastName: {
-      type: String,
-      required: true,
-      trim: true
-    },
-    password: {
-      type: String,
-      required: true
-    },
-    isActive: {
-      type: Boolean,
-      default: true
-    },
     role: {
       type: String,
-      enum: ['user', 'admin', 'moderator'],
-      default: 'user'
+      enum: ['candidate', 'interviewer'],
+      default: 'candidate'
     },
-    lastLogin: {
-      type: Date
-    }
   },
   {
     timestamps: true,
@@ -45,8 +24,6 @@ const UserSchema = new Schema(
 // Add index for email
 UserSchema.index({ email: 1 });
 
-// Add compound index for name search
-UserSchema.index({ firstName: 1, lastName: 1 });
 
 /**
  * User model
