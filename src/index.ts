@@ -21,7 +21,7 @@ app.use(loggingMiddleware);
 
 // Routes
 app.get("/", (req: express.Request, res: express.Response) => {
-  res.status(200).json({ message: "Hello, TypeScript with Node.js deployed on AWS EC2, tested with a CI/CD pipeline!" });
+  res.status(200).json({ message: "Hello, TypeScript with Node.js deployed on AWS EC2, with CI/CD pipeline configured and working!" });
 });
 
 app.get("/error", (req: express.Request, res: express.Response) => {
