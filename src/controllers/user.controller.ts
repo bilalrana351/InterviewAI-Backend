@@ -5,9 +5,11 @@ import { asyncErrorHandler } from '../middlewares/error-handling.middleware';
 interface SupabaseAuthUser {
   id: string;
   email: string;
-  raw_user_meta_data: {
-    sub: string;
-    role?: 'candidate' | 'interviewer';
+  record: {
+    email: string;
+    raw_user_meta_data: {
+      role?: 'candidate' | 'interviewer';
+    };
   };
 }
 
@@ -19,15 +21,15 @@ export const createUser = asyncErrorHandler(async (req: Request, res: Response) 
   const authUser = req.body as SupabaseAuthUser;
   console.log('I am here for the authUser', authUser);
   // Validate webhook data
-  if (!authUser?.email) {
+  if (!authUser?.record?.email) {
     return res.status(400).json({
       status: 'error',
       message: 'Email is required in payload'
     });
   }
-  const { email, raw_user_meta_data } = authUser;
+  const { email, record } = authUser;
   // Default to 'candidate' if role is not present in meta data
-  const role = raw_user_meta_data?.role || 'candidate';
+  const role = record?.raw_user_meta_data?.role || 'candidate';
 
   // Check if user already exists
   const existingUser = await User.findOne({ email: email.toLowerCase() });
