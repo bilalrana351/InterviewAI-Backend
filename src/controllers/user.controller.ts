@@ -21,24 +21,21 @@ export const createUser = asyncErrorHandler(async (req: Request, res: Response) 
   const authUser = req.body as SupabaseAuthUser;
   console.log('I am here for the authUser', authUser);
   // Validate webhook data
+  console.log('I am here for the with the record', authUser.record);
+  console.log('I am here for the with the email', authUser.record.email);
+  console.log('I am here for the with the meta data', authUser.record.raw_user_meta_data);
   if (!authUser?.record?.email) {
     return res.status(400).json({
       status: 'error',
       message: 'Email is required in payload'
     });
   }
-  const { email, record } = authUser;
+  const { record } = authUser;
   // Default to 'candidate' if role is not present in meta data
+  const email = record.email
   const role = record?.raw_user_meta_data?.role || 'candidate';
 
-  // Check if user already exists
-  const existingUser = await User.findOne({ email: email.toLowerCase() });
-  if (existingUser) {
-    return res.status(409).json({
-      status: 'error',
-      message: 'User with this email already exists'
-    });
-  }
+
 
   // Create new user
   const user = new User({
