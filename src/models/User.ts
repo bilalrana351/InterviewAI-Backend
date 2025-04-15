@@ -1,31 +1,9 @@
 import mongoose, { Schema } from 'mongoose';
+import { IUser } from '../types/User';
 
-const UserSchema = new Schema(
-  {
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-      lowercase: true
-    },
-    role: {
-      type: String,
-      enum: ['candidate', 'interviewer'],
-      default: 'candidate'
-    },
-  },
-  {
-    timestamps: true,
-    versionKey: false
-  }
-);
+const userSchema = new Schema({
+  email: { type: String, required: true, unique: true },
+  name: { type: String, required: true }
+});
 
-// Add index for email
-UserSchema.index({ email: 1 });
-
-
-/**
- * User model
- */
-export const User = mongoose.model('User', UserSchema); 
+export const User = mongoose.model<IUser>('User', userSchema);
