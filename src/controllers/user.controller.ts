@@ -1,6 +1,9 @@
 import { Request, Response } from 'express';
 import { User } from '../models/User';
+import { Admin } from '../models/Admin';
 import { asyncErrorHandler } from '../middlewares/error-handling.middleware';
+import { Candidate } from '../models/Candidate';
+import mongoose from 'mongoose';
 
 interface SupabaseAuthUser {
   id: string;
@@ -9,6 +12,7 @@ interface SupabaseAuthUser {
     email: string;
     raw_user_meta_data: {
       role?: 'candidate' | 'interviewer';
+      name?: string;
     };
   };
 }
@@ -17,54 +21,77 @@ interface SupabaseAuthUser {
  * Create a new user from Supabase auth.users
  */
 export const createUser = asyncErrorHandler(async (req: Request, res: Response) => {
-  console.log('I am in the create user controller build for supabase');
   const authUser = req.body as SupabaseAuthUser;
-  console.log('I am here for the authUser', authUser);
-  // Validate webhook data
-  console.log('I am here for the with the record', authUser.record);
-  console.log('I am here for the with the email', authUser.record.email);
-  console.log('I am here for the with the meta data', authUser.record.raw_user_meta_data);
+  
+  console.log('Incoming user data: ', authUser);
+
+
   if (!authUser?.record?.email) {
     return res.status(400).json({
-      status: 'error',
       message: 'Email is required in payload'
     });
   }
+  
   const { record } = authUser;
+
   // Default to 'candidate' if role is not present in meta data
   const email = record.email
+
+  // Get the name from the meta data
+  const name = record?.raw_user_meta_data?.name || 'Unknown';
+
   const role = record?.raw_user_meta_data?.role || 'candidate';
 
+  console.log("The user should have the role of: ", role);
 
+  // Start a MongoDB session for transaction
+  const session = await mongoose.startSession();
 
-  // Create new user
-  const user = new User({
-    email: email.toLowerCase(),
-    role
-  });
+  try {
+    await session.withTransaction(async () => {
+      console.log("Creating the user");
+      // Create the user
+      const user = await new User({
+        email: email.toLowerCase(),
+        name
+      }).save({ session });
 
-  await user.save();
+      console.log("Created the user");
 
-  return res.status(201).json({
-    status: 'success',
-    data: {
-      user: {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-        createdAt: user.createdAt
+      console.log("Now creating the admin or candidate, the current role is: ", role);
+
+      if (role === 'interviewer') {
+        await new Admin({
+          user: user._id
+        }).save({ session });
+      } else if (role === 'candidate') {
+        console.log("Creating the candidate");
+        await new Candidate({
+          user: user._id
+        }).save({ session });
+      } else {
+        console.log("Invalid role");
+        throw new Error('Invalid role');
       }
-    }
-  });
+    });
+
+    return res.status(201).json({
+      message: 'User created successfully'
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: 'Error creating user' + error
+    });
+  }
 });
 
 /**
  * Get user by email
  */
-export const getUserByEmail = asyncErrorHandler(async (req: Request, res: Response) => {
-  const { email } = req.params;
+export const getUser = asyncErrorHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
 
-  const user = await User.findOne({ email: email.toLowerCase() });
+  const user = await User.findOne({ _id: id });
   if (!user) {
     return res.status(404).json({
       status: 'error',
@@ -74,13 +101,5 @@ export const getUserByEmail = asyncErrorHandler(async (req: Request, res: Respon
 
   return res.status(200).json({
     status: 'success',
-    data: {
-      user: {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-        createdAt: user.createdAt
-      }
-    }
   });
 }); 

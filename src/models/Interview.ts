@@ -1,12 +1,11 @@
 import mongoose, { Schema } from 'mongoose';
 import { IInterview } from '../types/Interview';
-import { INTERVIEW_STAGES } from '../constants/interview';
+
 const interviewSchema = new Schema({
-  candidate: { type: Schema.Types.ObjectId, ref: 'Candidate', required: true },
-  job: { type: Schema.Types.ObjectId, ref: 'Job', required: true },
-  interviewDate: { type: Date },
-  status: { type: String, enum: INTERVIEW_STAGES, default: 'scheduled' }
+  job_id: { type: Schema.Types.ObjectId, ref: 'Job', required: true },
+  user_id: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  time: { type: String, required: true },
+  date: { type: Date, required: true }
 });
 
 export const Interview = mongoose.model<IInterview>('Interview', interviewSchema);
-  
