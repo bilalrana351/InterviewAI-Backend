@@ -82,3 +82,52 @@ export const getUser = asyncErrorHandler(async (req: Request, res: Response) => 
     status: 'success',
   });
 }); 
+
+export const updateUser = asyncErrorHandler(async (req: Request, res: Response) => {
+  const authUser = req.body as SupabaseAuthUser;
+
+  const userMetadata = authUser.record?.raw_user_meta_data;
+
+  // Get the name from the meta data
+  const name = userMetadata?.name;
+
+  if (!name) {
+    return res.status(400).json({
+      message: 'Name is required in payload'
+    });
+  }
+
+  const user = await User.findOne({ email: authUser.record?.email });
+
+  if (!user) {
+    return res.status(404).json({
+      message: 'User not found'
+    });
+  }
+
+  // Update the user's name
+  user.name = name;
+  await user.save();
+
+  return res.status(200).json({
+    message: 'User updated successfully'
+  });
+});
+
+export const deleteUser = asyncErrorHandler(async (req: Request, res: Response) => {
+  const authUser = req.body as SupabaseAuthUser;
+
+  const user = await User.findOne({ email: authUser.record?.email });
+
+  if (!user) {
+    return res.status(404).json({
+      message: 'User not found'
+    });
+  }
+
+  await user.deleteOne();
+
+  return res.status(200).json({
+    message: 'User deleted successfully'
+  });
+});
