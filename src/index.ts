@@ -7,7 +7,7 @@ import { ConfigService } from "./services/config.service";
 import { logEnvironmentVariables, logSuccess } from "./utils/logger.util";
 import { databaseService } from "./services/database.service";
 import { userRoutes } from "./routes/User";
-import { companyRoutes } from './routes/Company';
+import { companyRoutes } from "./routes/Company";
 import { employeeRoutes } from './routes/Employee';
 import { interviewRoutes } from './routes/Interview';
 import { jobRoutes } from './routes/Job';
