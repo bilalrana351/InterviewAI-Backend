@@ -14,7 +14,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 export const authMiddleware = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
     // Get user data from request body
-    const userData = req.body?.mail;
+    const userData = req.body?.email;
     
     if (!userData) {
       return res.status(400).json({ 
@@ -38,7 +38,7 @@ export const authMiddleware = async (req: AuthenticatedRequest, res: Response, n
     console.log("User email:", email);
     
     // Check if user exists in the database
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: email });
     
     if (!user) {
       return res.status(404).json({

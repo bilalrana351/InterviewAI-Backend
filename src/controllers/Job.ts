@@ -7,7 +7,7 @@ import { Interview } from '../models/Interview';
 import mongoose from 'mongoose';
 
 // GET /api/jobs - Get all jobs for a user (applied for, owned companies, employed at)
-export const getAllJobs = async (req: AuthenticatedRequest, res: Response) => {
+export const getAllJobs = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
   try {
     const userId = req.user._id;
     
@@ -58,7 +58,7 @@ export const getAllJobs = async (req: AuthenticatedRequest, res: Response) => {
 };
 
 // POST /api/jobs - Create a new job (for company owners or employees)
-export const createJob = async (req: AuthenticatedRequest, res: Response) => {
+export const createJob = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
   try {
     const userId = req.user._id;
     const { name, description, company_id } = req.body;
@@ -133,7 +133,7 @@ export const createJob = async (req: AuthenticatedRequest, res: Response) => {
 };
 
 // GET /api/jobs/:id - Get a job by ID (only for owners or employees)
-export const getJobById = async (req: AuthenticatedRequest, res: Response) => {
+export const getJobById = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
   try {
     const userId = req.user._id;
     const { id: jobId } = req.params;
@@ -207,7 +207,7 @@ export const getJobById = async (req: AuthenticatedRequest, res: Response) => {
 };
 
 // PUT /api/jobs/:id - Update a job (only for owners or employees)
-export const updateJob = async (req: AuthenticatedRequest, res: Response) => {
+export const updateJob = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
   try {
     const userId = req.user._id;
     const { id: jobId } = req.params;
@@ -280,7 +280,7 @@ export const updateJob = async (req: AuthenticatedRequest, res: Response) => {
 };
 
 // DELETE /api/jobs/:id - Delete a job (only for owners or employees)
-export const deleteJob = async (req: AuthenticatedRequest, res: Response) => {
+export const deleteJob = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
   try {
     const userId = req.user._id;
     const { id: jobId } = req.params;

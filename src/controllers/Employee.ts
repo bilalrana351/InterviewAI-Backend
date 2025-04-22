@@ -6,50 +6,27 @@ import { User } from '../models/User';
 import mongoose from 'mongoose';
 
 // GET /api/employees - Get all employees (only for company owners)
-export const getAllEmployees = async (req: AuthenticatedRequest, res: Response) => {
+export const getAllEmployees = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
   try {
     const userId = req.user._id;
-    const { companyId } = req.query;
     
-    // Verify companyId is provided
-    if (!companyId) {
-      return res.status(400).json({
-        status: 'error',
-        code: 'MISSING_COMPANY_ID',
-        message: 'Company ID is required as a query parameter'
+    // Find all companies owned by the user
+    const ownedCompanies = await Company.find({ owner_id: userId });
+    
+    if (ownedCompanies.length === 0) {
+      return res.status(200).json({
+        status: 'success',
+        data: []
       });
     }
     
-    // Check if valid ObjectId
-    if (!mongoose.Types.ObjectId.isValid(companyId as string)) {
-      return res.status(400).json({
-        status: 'error',
-        code: 'INVALID_ID',
-        message: 'Invalid company ID format'
-      });
-    }
+    // Get the IDs of all companies owned by the user
+    const companyIds = ownedCompanies.map(company => company._id);
     
-    // Verify company exists
-    const company = await Company.findById(companyId);
-    if (!company) {
-      return res.status(404).json({
-        status: 'error',
-        code: 'COMPANY_NOT_FOUND',
-        message: 'Company not found'
-      });
-    }
-    
-    // Verify user is the owner of the company
-    if (company.owner_id.toString() !== userId.toString()) {
-      return res.status(403).json({
-        status: 'error',
-        code: 'ACCESS_DENIED',
-        message: 'Only company owners can view employees'
-      });
-    }
-    
-    // Fetch employees
-    const employees = await Employee.find({ company_id: companyId }).populate('user_id', 'name email');
+    // Fetch employees for all companies owned by the user
+    const employees = await Employee.find({ company_id: { $in: companyIds } })
+      .populate('user_id', 'name email')
+      .populate('company_id', 'name');
     
     res.status(200).json({
       status: 'success',
@@ -66,7 +43,7 @@ export const getAllEmployees = async (req: AuthenticatedRequest, res: Response) 
 };
 
 // POST /api/employees - Create a new employee (only for company owners)
-export const createEmployee = async (req: AuthenticatedRequest, res: Response) => {
+export const createEmployee = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
   try {
     const userId = req.user._id;
     const { company_id, user_id, role } = req.body;
@@ -152,7 +129,7 @@ export const createEmployee = async (req: AuthenticatedRequest, res: Response) =
 };
 
 // GET /api/employees/:id - Get an employee by ID (only for company owners)
-export const getEmployeeById = async (req: AuthenticatedRequest, res: Response) => {
+export const getEmployeeById = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
   try {
     const userId = req.user._id;
     const { id: employeeId } = req.params;
@@ -211,7 +188,7 @@ export const getEmployeeById = async (req: AuthenticatedRequest, res: Response) 
 };
 
 // PUT /api/employees/:id - Update an employee (only for company owners)
-export const updateEmployee = async (req: AuthenticatedRequest, res: Response) => {
+export const updateEmployee = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
   try {
     const userId = req.user._id;
     const { id: employeeId } = req.params;
@@ -287,7 +264,7 @@ export const updateEmployee = async (req: AuthenticatedRequest, res: Response) =
 };
 
 // DELETE /api/employees/:id - Delete an employee (only for company owners)
-export const deleteEmployee = async (req: AuthenticatedRequest, res: Response) => {
+export const deleteEmployee = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
   try {
     const userId = req.user._id;
     const { id: employeeId } = req.params;

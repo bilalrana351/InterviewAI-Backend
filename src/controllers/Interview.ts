@@ -8,7 +8,7 @@ import { User } from '../models/User';
 import mongoose from 'mongoose';
 
 // GET /api/interviews - Get all interviews for the user
-export const getAllInterviews = async (req: AuthenticatedRequest, res: Response) => {
+export const getAllInterviews = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
   try {
     const userId = req.user._id;
     
@@ -38,7 +38,7 @@ export const getAllInterviews = async (req: AuthenticatedRequest, res: Response)
 };
 
 // POST /api/interviews - Create a new interview (only for company owners or employees)
-export const createInterview = async (req: AuthenticatedRequest, res: Response) => {
+export const createInterview = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
   try {
     const userId = req.user._id;
     const { job_id, user_id, time, date } = req.body;
@@ -153,7 +153,7 @@ export const createInterview = async (req: AuthenticatedRequest, res: Response) 
 };
 
 // GET /api/interviews/:id - Get an interview by ID (company owners/employees or the interviewee)
-export const getInterviewById = async (req: AuthenticatedRequest, res: Response) => {
+export const getInterviewById = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
   try {
     const userId = req.user._id;
     const { id: interviewId } = req.params;
@@ -230,7 +230,7 @@ export const getInterviewById = async (req: AuthenticatedRequest, res: Response)
 };
 
 // PUT /api/interviews/:id - Update an interview (only for company owners or employees)
-export const updateInterview = async (req: AuthenticatedRequest, res: Response) => {
+export const updateInterview = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
   try {
     const userId = req.user._id;
     const { id: interviewId } = req.params;
@@ -327,7 +327,7 @@ export const updateInterview = async (req: AuthenticatedRequest, res: Response) 
 };
 
 // DELETE /api/interviews/:id - Delete an interview (only for company owners or employees)
-export const deleteInterview = async (req: AuthenticatedRequest, res: Response) => {
+export const deleteInterview = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
   try {
     const userId = req.user._id;
     const { id: interviewId } = req.params;
