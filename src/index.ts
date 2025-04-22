@@ -6,7 +6,6 @@ import { notFoundMiddleware } from "./middlewares/not-found.middleware";
 import { ConfigService } from "./services/config.service";
 import { logEnvironmentVariables, logSuccess } from "./utils/logger.util";
 import { databaseService } from "./services/database.service";
-import { userRoutes } from './routes/user.routes';
 import {auth } from "./lib/auth"
 import cors from "cors"
 import { toNodeHandler} from "better-auth/node";
