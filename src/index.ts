@@ -22,7 +22,7 @@ app.use(loggingMiddleware);
 
 // Routes
 app.get("/", (req: express.Request, res: express.Response) => {
-  res.status(200).json({ message: "Hello, TypeScript with Node.js deployed on AWS EC2, with CI/CD pipeline configured, tested and working!" });
+  res.status(200).json({ message: "Hello, TypeScript with Node.js deployed on AWS, with CI/CD pipeline configured, tested and working!" });
 });
 
 // This will be a route to check if the AI service is running
