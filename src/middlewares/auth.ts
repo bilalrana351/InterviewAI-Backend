@@ -24,7 +24,6 @@ export const authMiddleware = async (req: AuthenticatedRequest, res: Response, n
       });
     }
     
-    // Extract email from user data
     const email = userData;
     
     if (!email) {

@@ -58,10 +58,10 @@ app.get("/health/db", async (req: express.Request, res: express.Response) => {
 });
 
 app.use('/api/users', userRoutes);
-app.use('/api/company', companyRoutes);
-app.use('/api/employee', employeeRoutes);
-app.use('/api/interview', interviewRoutes);
-app.use('/api/job', jobRoutes);
+app.use('/api/companies', companyRoutes);
+app.use('/api/employees', employeeRoutes);
+app.use('/api/interviews', interviewRoutes);
+app.use('/api/jobs', jobRoutes);
 
 // 404 handler - should be after all routes
 app.use(notFoundMiddleware);

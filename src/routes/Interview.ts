@@ -6,22 +6,23 @@ import {
   updateInterview,
   deleteInterview,
 } from '../controllers/Interview';
+import { authMiddleware } from '../middlewares/auth';
 
 const router = Router();
 
 // GET /api/interview - Get all interviews
-router.get('/', getAllInterviews);
+router.get('/', authMiddleware, getAllInterviews);
 
 // POST /api/interview - Create a new interview
-router.post('/', createInterview);
+router.post('/', authMiddleware, createInterview);
 
 // GET /api/interview/:id - Get an interview by ID
-router.get('/:id', getInterviewById);
+router.get('/:id', authMiddleware, getInterviewById);
 
 // PUT /api/interview/:id - Update an interview by ID
-router.put('/:id', updateInterview);
+router.put('/:id', authMiddleware, updateInterview);
 
 // DELETE /api/interview/:id - Delete an interview by ID
-router.delete('/:id', deleteInterview);
+router.delete('/:id', authMiddleware, deleteInterview);
 
 export const interviewRoutes = router;

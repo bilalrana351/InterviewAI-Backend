@@ -6,22 +6,23 @@ import {
   updateEmployee,
   deleteEmployee,
 } from '../controllers/Employee';
+import { authMiddleware } from '../middlewares/auth';
 
 const router = Router();
 
-// GET /api/employee - Get all employees
-router.get('/', getAllEmployees);
+// GET /api/employees - Get all employees
+router.get('/', authMiddleware, getAllEmployees);
 
-// POST /api/employee - Create a new employee
-router.post('/', createEmployee);
+// POST /api/employees - Create a new employee
+router.post('/', authMiddleware, createEmployee);
 
-// GET /api/employee/:id - Get an employee by ID
-router.get('/:id', getEmployeeById);
+// GET /api/employees/:id - Get an employee by ID
+router.get('/:id', authMiddleware, getEmployeeById);
 
-// PUT /api/employee/:id - Update an employee by ID
-router.put('/:id', updateEmployee);
+// PUT /api/employees/:id - Update an employee by ID
+router.put('/:id', authMiddleware, updateEmployee);
 
-// DELETE /api/employee/:id - Delete an employee by ID
-router.delete('/:id', deleteEmployee);
+// DELETE /api/employees/:id - Delete an employee by ID
+router.delete('/:id', authMiddleware, deleteEmployee);
 
 export const employeeRoutes = router;
