@@ -7,22 +7,28 @@ import { ConfigService } from "./services/config.service";
 import { logEnvironmentVariables, logSuccess } from "./utils/logger.util";
 import { databaseService } from "./services/database.service";
 import { userRoutes } from './routes/user.routes';
-
-// Initialize configuration
+import {auth } from "./lib/auth"
+import cors from "cors"
+import { toNodeHandler} from "better-auth/node";
 const configService = new ConfigService();
 
 // Create Express app
 const app = express();
 const PORT = process.env.PORT || DEFAULT_PORT;
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true
+}));
 
-// Middleware
-app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(loggingMiddleware);
+app.all("/api/auth/*", toNodeHandler(auth))
+// Middleware
 
+app.use(express.json());
 // Routes
 app.get("/", (req: express.Request, res: express.Response) => {
-  res.status(200).json({ message: "Hello, TypeScript with Node.js deployed on AWS EC2, with CI/CD pipeline configured and working!" });
+  res.status(200).json({ message: "Hello, TypeScript with Node.js deployed on AWS EC2, with CI/CD pipeline configured, tested and working!" });
 });
 
 // This will be a route to check if the AI service is running
