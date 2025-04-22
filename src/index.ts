@@ -10,6 +10,12 @@ import { userRoutes } from './routes/user.routes';
 import {auth } from "./lib/auth"
 import cors from "cors"
 import { toNodeHandler} from "better-auth/node";
+import { userRoutes } from "./routes/User";
+import { companyRoutes } from "./routes/Company";
+import { employeeRoutes } from './routes/Employee';
+import { interviewRoutes } from './routes/Interview';
+import { jobRoutes } from './routes/Job';
+
 const configService = new ConfigService();
 
 // Create Express app
@@ -60,6 +66,10 @@ app.get("/health/db", async (req: express.Request, res: express.Response) => {
 });
 
 app.use('/api/users', userRoutes);
+app.use('/api/companies', companyRoutes);
+app.use('/api/employees', employeeRoutes);
+app.use('/api/interviews', interviewRoutes);
+app.use('/api/jobs', jobRoutes);
 
 // 404 handler - should be after all routes
 app.use(notFoundMiddleware);
