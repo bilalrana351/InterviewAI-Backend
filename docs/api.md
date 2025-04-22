@@ -2,6 +2,65 @@
 
 This document provides details on the API endpoints for managing Companies, Employees, Jobs, and Interviews.
 
+## Data Models
+
+Below are the data models used throughout the API:
+
+### User Model
+
+```json
+{
+  "_id": "string (ObjectId)",
+  "name": "string",
+  "email": "string (unique)"
+}
+```
+
+### Company Model
+
+```json
+{
+  "_id": "string (ObjectId)",
+  "name": "string",
+  "description": "string (optional)",
+  "owner_id": "string (ObjectId, references User)"
+}
+```
+
+### Employee Model
+
+```json
+{
+  "_id": "string (ObjectId)",
+  "company_id": "string (ObjectId, references Company)",
+  "user_id": "string (ObjectId, references User)",
+  "role": "string"
+}
+```
+
+### Job Model
+
+```json
+{
+  "_id": "string (ObjectId)",
+  "name": "string",
+  "description": "string",
+  "company_id": "string (ObjectId, references Company)"
+}
+```
+
+### Interview Model
+
+```json
+{
+  "_id": "string (ObjectId)",
+  "job_id": "string (ObjectId, references Job)",
+  "user_id": "string (ObjectId, references User)",
+  "time": "string",
+  "date": "Date (ISO format)"
+}
+```
+
 ## Authentication
 
 All protected routes require an `Authorization` header with a bearer token:
@@ -35,11 +94,25 @@ Assume the base URL for all endpoints is `/api`.
       "status": "success",
       "data": [
         {
-          "_id": "string",
-          "name": "string",
-          "description": "string",
-          "owner_id": "string",
-          "role": "owner" | "employee" | "interviewing"
+          "_id": "60f7a9b0c9a5d2001c8e9e9a",
+          "name": "Acme Corp",
+          "description": "A company that makes everything",
+          "owner_id": "60f7a9b0c9a5d2001c8e9e9b",
+          "role": "owner"
+        },
+        {
+          "_id": "60f7a9b0c9a5d2001c8e9e9c",
+          "name": "TechCorp",
+          "description": "A tech company",
+          "owner_id": "60f7a9b0c9a5d2001c8e9e9d",
+          "role": "employee"
+        },
+        {
+          "_id": "60f7a9b0c9a5d2001c8e9e9e",
+          "name": "StartupInc",
+          "description": "A startup company",
+          "owner_id": "60f7a9b0c9a5d2001c8e9e9f",
+          "role": "interviewing"
         }
       ]
     }
@@ -140,17 +213,30 @@ Assume the base URL for all endpoints is `/api`.
       "status": "success",
       "data": [
         {
-          "_id": "string",
+          "_id": "60f7a9b0c9a5d2001c8e9e9a",
           "company_id": {
-            "_id": "string", 
-            "name": "string"
+            "_id": "60f7a9b0c9a5d2001c8e9e9b", 
+            "name": "Acme Corp"
           },
           "user_id": {
-            "_id": "string",
-            "name": "string",
-            "email": "string"
+            "_id": "60f7a9b0c9a5d2001c8e9e9c",
+            "name": "John Doe",
+            "email": "john.doe@example.com"
           },
-          "role": "string"
+          "role": "HR Manager"
+        },
+        {
+          "_id": "60f7a9b0c9a5d2001c8e9e9d",
+          "company_id": {
+            "_id": "60f7a9b0c9a5d2001c8e9e9b", 
+            "name": "Acme Corp"
+          },
+          "user_id": {
+            "_id": "60f7a9b0c9a5d2001c8e9e9e",
+            "name": "Jane Smith",
+            "email": "jane.smith@example.com"
+          },
+          "role": "Developer"
         }
       ]
     }
@@ -253,9 +339,45 @@ Assume the base URL for all endpoints is `/api`.
     {
       "status": "success",
       "data": {
-        "appliedJobs": [/* Job objects with populated company_id */],
-        "ownedCompanyJobs": [/* Job objects with populated company_id */],
-        "employeeCompanyJobs": [/* Job objects with populated company_id */]
+        "appliedJobs": [
+          {
+            "_id": "60f7a9b0c9a5d2001c8e9e9a",
+            "name": "Senior Developer",
+            "description": "We're looking for a senior developer with 5+ years of experience",
+            "company_id": {
+              "_id": "60f7a9b0c9a5d2001c8e9e9b",
+              "name": "TechCorp",
+              "description": "A tech company",
+              "owner_id": "60f7a9b0c9a5d2001c8e9e9c"
+            }
+          }
+        ],
+        "ownedCompanyJobs": [
+          {
+            "_id": "60f7a9b0c9a5d2001c8e9e9d",
+            "name": "Marketing Specialist",
+            "description": "Looking for a marketing specialist for our new product line",
+            "company_id": {
+              "_id": "60f7a9b0c9a5d2001c8e9e9e",
+              "name": "Acme Corp",
+              "description": "A company that makes everything",
+              "owner_id": "60f7a9b0c9a5d2001c8e9e9f"
+            }
+          }
+        ],
+        "employeeCompanyJobs": [
+          {
+            "_id": "60f7a9b0c9a5d2001c8e9e9g",
+            "name": "UX Designer",
+            "description": "We need a UX designer for our mobile app",
+            "company_id": {
+              "_id": "60f7a9b0c9a5d2001c8e9e9h",
+              "name": "DesignStudio",
+              "description": "A design studio",
+              "owner_id": "60f7a9b0c9a5d2001c8e9e9i"
+            }
+          }
+        ]
       }
     }
     ```
@@ -356,7 +478,38 @@ Assume the base URL for all endpoints is `/api`.
     ```json
     {
       "status": "success",
-      "data": [/* Array of Interview objects with populated job_id (including company name) */]
+      "data": [
+        {
+          "_id": "60f7a9b0c9a5d2001c8e9e9a",
+          "job_id": {
+            "_id": "60f7a9b0c9a5d2001c8e9e9b",
+            "name": "Senior Developer",
+            "description": "We're looking for a senior developer with 5+ years of experience",
+            "company_id": {
+              "_id": "60f7a9b0c9a5d2001c8e9e9c",
+              "name": "TechCorp"
+            }
+          },
+          "user_id": "60f7a9b0c9a5d2001c8e9e9d",
+          "time": "14:00",
+          "date": "2023-07-15T00:00:00.000Z"
+        },
+        {
+          "_id": "60f7a9b0c9a5d2001c8e9e9e",
+          "job_id": {
+            "_id": "60f7a9b0c9a5d2001c8e9e9f",
+            "name": "UX Designer",
+            "description": "We need a UX designer for our mobile app",
+            "company_id": {
+              "_id": "60f7a9b0c9a5d2001c8e9e9g",
+              "name": "DesignStudio"
+            }
+          },
+          "user_id": "60f7a9b0c9a5d2001c8e9e9d",
+          "time": "10:30",
+          "date": "2023-07-20T00:00:00.000Z"
+        }
+      ]
     }
     ```
 *   **Error Response**: `500 Internal Server Error` (e.g., `INTERNAL_SERVER_ERROR`)
@@ -396,7 +549,28 @@ Assume the base URL for all endpoints is `/api`.
     ```json
     {
       "status": "success",
-      "data": /* Interview object with populated job_id (including company details), populated user_id, and added 'userRole' field ('owner', 'employee', or 'interviewee') */
+      "data": {
+        "_id": "60f7a9b0c9a5d2001c8e9e9a",
+        "job_id": {
+          "_id": "60f7a9b0c9a5d2001c8e9e9b",
+          "name": "Senior Developer",
+          "description": "We're looking for a senior developer with 5+ years of experience",
+          "company_id": {
+            "_id": "60f7a9b0c9a5d2001c8e9e9c",
+            "name": "TechCorp",
+            "description": "A tech company",
+            "owner_id": "60f7a9b0c9a5d2001c8e9e9d"
+          }
+        },
+        "user_id": {
+          "_id": "60f7a9b0c9a5d2001c8e9e9e",
+          "name": "John Doe",
+          "email": "john.doe@example.com"
+        },
+        "time": "14:00",
+        "date": "2023-07-15T00:00:00.000Z",
+        "userRole": "interviewee"
+      }
     }
     ```
 *   **Error Responses**:
