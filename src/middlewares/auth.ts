@@ -1,12 +1,7 @@
 import { Response, NextFunction } from 'express';
-import { createClient } from '@supabase/supabase-js';
 import { AuthenticatedRequest } from '../types/Requests';
 import { User } from '../models/User';
 
-// Initialize Supabase client
-const supabaseUrl = process.env.SUPABASE_URL || '';
-const supabaseKey = process.env.SUPABASE_ANON_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 /**
  * Authentication middleware to verify bearer token
