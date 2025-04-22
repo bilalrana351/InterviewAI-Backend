@@ -6,7 +6,11 @@ import { notFoundMiddleware } from "./middlewares/not-found.middleware";
 import { ConfigService } from "./services/config.service";
 import { logEnvironmentVariables, logSuccess } from "./utils/logger.util";
 import { databaseService } from "./services/database.service";
-import { userRoutes } from './routes/user.routes';
+import { userRoutes } from "./routes/user";
+import { companyRoutes } from './routes/company';
+import { employeeRoutes } from './routes/Employee';
+import { interviewRoutes } from './routes/Interview';
+import { jobRoutes } from './routes/Job';
 
 // Initialize configuration
 const configService = new ConfigService();
@@ -54,6 +58,10 @@ app.get("/health/db", async (req: express.Request, res: express.Response) => {
 });
 
 app.use('/api/users', userRoutes);
+app.use('/api/company', companyRoutes);
+app.use('/api/employee', employeeRoutes);
+app.use('/api/interview', interviewRoutes);
+app.use('/api/job', jobRoutes);
 
 // 404 handler - should be after all routes
 app.use(notFoundMiddleware);
