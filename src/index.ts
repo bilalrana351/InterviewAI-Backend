@@ -14,6 +14,7 @@ import { companyRoutes } from "./routes/Company";
 import { employeeRoutes } from './routes/Employee';
 import { interviewRoutes } from './routes/Interview';
 import { jobRoutes } from './routes/Job';
+import { requireAuth, AuthenticatedRequest } from "./middlewares/auth.middleware";
 
 const configService = new ConfigService();
 
@@ -33,11 +34,60 @@ app.all("/api/auth/*", toNodeHandler(auth))
 app.use(express.json());
 // Routes
 app.get("/", (req: express.Request, res: express.Response) => {
-  res.status(200).json({ message: "Hello, TypeScript with Node.js deployed on AWS EC2, with CI/CD pipeline configured, tested and working!" });
+  const authHeader = req.headers.authorization;
+  console.log("Authorization header:", authHeader);
+  
+  // Check for cookies
+  const cookies = req.headers.cookie;
+  console.log("Cookies:", cookies);
+  
+  // Parse cookies into an object
+  const parsedCookies: Record<string, string> = {};
+  if (cookies) {
+    cookies.split(';').forEach(cookie => {
+      const parts = cookie.split('=');
+      const name = parts[0].trim();
+      const value = parts.slice(1).join('=').trim();
+      parsedCookies[name] = value;
+    });
+  }
+  
+  // Look for session cookie (adjust the name based on your actual session cookie name)
+  const sessionCookie = parsedCookies['next-auth.session-token'] || 
+                        parsedCookies['__session'] || 
+                        parsedCookies['session'];
+  
+  console.log("Session cookie:", sessionCookie);
+  
+  // Check for any token in query params
+  const queryToken = req.query.token;
+  console.log("Query token:", queryToken);
+  
+  res.status(200).json({ 
+    message: "Hello, TypeScript with Node.js deployed on AWS EC2, with CI/CD pipeline configured, tested and working!",
+    session: sessionCookie ? 'Session found' : 'No session found'
+  });
+});
+
+// A protected route example that requires authentication
+app.get("/api/protected", requireAuth, (req: express.Request, res: express.Response) => {
+  // TypeScript doesn't know about our custom properties, so we need to cast
+  const authenticatedReq = req as AuthenticatedRequest;
+  
+  res.status(200).json({ 
+    message: "This is a protected route - you are authenticated!",
+    user: {
+      id: authenticatedReq.user?.id,
+      email: authenticatedReq.user?.email,
+      name: authenticatedReq.user?.name,
+      emailVerified: authenticatedReq.user?.emailVerified
+    }
+  });
 });
 
 // This will be a route to check if the AI service is running
 app.get("/ai/status", async (req: express.Request, res: express.Response) => {
+  
   const response = await fetch(`${process.env.AI_SERVICE_URL}`);
   const data = await response.json();
   res.status(200).json(data);
