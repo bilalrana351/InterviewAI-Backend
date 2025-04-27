@@ -15,7 +15,6 @@ export interface AuthenticatedRequest extends Request {
     [key: string]: any;
   };
 }
-
 /**
  * Middleware to protect routes - verifies user is authenticated
  */
@@ -37,6 +36,7 @@ export const requireAuth = async (
     // Attach user and session to request for use in route handlers
     req.user = sessionResult.user;
     req.session = sessionResult.session;
+    console.log("I am in the middleware and this is the req.user", req.user)
     
     next();
   } catch (error) {
@@ -58,7 +58,7 @@ export const optionalAuth = async (
     const sessionResult = await auth.api.getSession({
       headers: fromNodeHeaders(req.headers)
     });
-    
+    console.log("I came inside the optional auth")
     if (sessionResult) {
       // Attach user and session to request for use in route handlers
       req.user = sessionResult.user;

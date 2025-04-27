@@ -15,24 +15,17 @@ import { employeeRoutes } from './routes/Employee';
 import { interviewRoutes } from './routes/Interview';
 import { jobRoutes } from './routes/Job';
 import { requireAuth, AuthenticatedRequest } from "./middlewares/auth.middleware";
-
 const configService = new ConfigService();
-
-// Create Express app
 const app = express();
 const PORT = process.env.PORT || DEFAULT_PORT;
 app.use(cors({
   origin: 'http://localhost:5173',
   credentials: true
 }));
-
 app.use(express.urlencoded({ extended: true }));
 app.use(loggingMiddleware);
 app.all("/api/auth/*", toNodeHandler(auth))
-// Middleware
-
 app.use(express.json());
-// Routes
 app.get("/", (req: express.Request, res: express.Response) => {
   const authHeader = req.headers.authorization;
   console.log("Authorization header:", authHeader);
@@ -69,8 +62,10 @@ app.get("/", (req: express.Request, res: express.Response) => {
   });
 });
 
+
+app.use(requireAuth)
 // A protected route example that requires authentication
-app.get("/api/protected", requireAuth, (req: express.Request, res: express.Response) => {
+app.get("/api/protected", (req: express.Request, res: express.Response) => {
   // TypeScript doesn't know about our custom properties, so we need to cast
   const authenticatedReq = req as AuthenticatedRequest;
   
@@ -119,8 +114,6 @@ app.use('/api/companies', companyRoutes);
 app.use('/api/employees', employeeRoutes);
 app.use('/api/interviews', interviewRoutes);
 app.use('/api/jobs', jobRoutes);
-
-// 404 handler - should be after all routes
 app.use(notFoundMiddleware);
 
 // Error handling middleware - should be last

@@ -10,7 +10,7 @@ import mongoose from 'mongoose';
 // GET /api/interviews - Get all interviews for the user
 export const getAllInterviews = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
   try {
-    const userId = req.user._id;
+    const userId = req.user.id;
     
     // Find all interviews where the user is the interviewee
     const interviews = await Interview.find({ user_id: userId })

@@ -8,8 +8,21 @@ import { User } from '../models/User';
  */
 export const authMiddleware = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
+    // Check for authorization header (Bearer token)
+    const authHeader = req.headers.authorization;
+    console.log("Authorization header:", authHeader);
+    
+    // Check for cookies
+    const cookies = req.headers.cookie;
+    console.log("Cookies:", cookies);
+    
+    // Check for any token in query params
+    const queryToken = req.query.token;
+    console.log("Query token:", queryToken);
+    
     // Get user data from request body
     const userData = req.body?.email;
+    console.log("Request body:", req.body);
     
     if (!userData) {
       return res.status(400).json({ 

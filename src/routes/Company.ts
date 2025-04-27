@@ -6,23 +6,23 @@ import {
   updateCompany,
   deleteCompany,
 } from '../controllers/Company';
-import { authMiddleware } from '../middlewares/auth';
+
 
 const router = Router();
 
 // GET /api/company - Get all companies
-router.get('/', authMiddleware, getAllCompanies);
+router.get('/',getAllCompanies);
 
 // POST /api/company - Create a new company
-router.post('/', authMiddleware, createCompany);
+router.post('/',createCompany);
 
 // GET /api/company/:id - Get a company by ID
-router.get('/:id', authMiddleware, getCompanyById);
+router.get('/:id',getCompanyById);
 
 // PUT /api/company/:id - Update a company by ID
-router.put('/:id', authMiddleware, updateCompany);
+router.put('/:id',updateCompany);
 
 // DELETE /api/company/:id - Delete a company by ID
-router.delete('/:id', authMiddleware, deleteCompany);
+router.delete('/:id',deleteCompany);
 
 export const companyRoutes = router;

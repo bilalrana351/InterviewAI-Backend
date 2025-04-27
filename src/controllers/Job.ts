@@ -9,7 +9,7 @@ import mongoose from 'mongoose';
 // GET /api/jobs - Get all jobs for a user (applied for, owned companies, employed at)
 export const getAllJobs = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
   try {
-    const userId = req.user._id;
+    const userId = req.user.id;
     
     // 1. Find jobs the user has applied for (has interviews for)
     const userInterviews = await Interview.find({ user_id: userId });
@@ -56,7 +56,6 @@ export const getAllJobs = async (req: AuthenticatedRequest, res: Response): Prom
     });
   }
 };
-
 // POST /api/jobs - Create a new job (for company owners or employees)
 export const createJob = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
   try {
