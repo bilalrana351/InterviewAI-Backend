@@ -35,6 +35,7 @@ export const requireAuth = async (
 
     // Attach user and session to request for use in route handlers
     req.user = sessionResult.user;
+    req.user._id = req.user.id
     req.session = sessionResult.session;
     console.log("I am in the middleware and this is the req.user", req.user)
     
