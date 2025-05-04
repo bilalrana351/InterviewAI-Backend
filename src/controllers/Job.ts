@@ -9,8 +9,8 @@ import mongoose from 'mongoose';
 // GET /api/jobs - Get all jobs for a user (applied for, owned companies, employed at)
 export const getAllJobs = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
   try {
+    
     const userId = req.user.id;
-    console.log(" I am in the controller of getAllJobs", req.user._id)
     // 1. Find jobs the user has applied for (has interviews for)
     const userInterviews = await Interview.find({ user_id: userId });
     const appliedJobIds = userInterviews.map(interview => interview.job_id);
@@ -125,6 +125,8 @@ export const createJob = async (req: AuthenticatedRequest, res: Response): Promi
         message: 'Only company owners or employees can create jobs'
       });
     }
+
+    console.log("ROUND TYPES", roundTypes)
     
     // Create the job
     const newJob = new Job({
@@ -133,7 +135,7 @@ export const createJob = async (req: AuthenticatedRequest, res: Response): Promi
       company_id,
       role,
       framework,
-      roundTypes: roundTypes || [],
+      roundTypes: roundTypes,
       deadline
     });
     

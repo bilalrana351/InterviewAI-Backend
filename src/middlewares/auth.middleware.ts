@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { auth } from '../lib/auth';
 import { fromNodeHeaders } from 'better-auth/node';
-
+import { User } from '../models/User';
 export interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
@@ -37,7 +37,6 @@ export const requireAuth = async (
     req.user = sessionResult.user;
     req.user._id = req.user.id
     req.session = sessionResult.session;
-    console.log("I am in the middleware and this is the req.user", req.user)
     
     next();
   } catch (error) {

@@ -46,7 +46,7 @@ Below are the data models used throughout the API:
   "name": "string",
   "description": "string",
   "role": "string",
-  "framework": "string",
+  "framework": ["string"],
   "roundTypes": [
     "string (enum: Coding, FrameworkSpecific, SystemDesign, Behavioural, KnowledgeBased)"
   ],
@@ -407,7 +407,7 @@ Assume the base URL for all endpoints is `/api`.
       "name": "string (required)",
       "description": "string (required)",
       "role": "string (required)",
-      "framework": "string (required)",
+      "framework": ["string (required)"],
       "roundTypes": [
         "string (enum: Coding, FrameworkSpecific, SystemDesign, Behavioural, KnowledgeBased)"
       ],
@@ -455,7 +455,7 @@ Assume the base URL for all endpoints is `/api`.
       "name": "string (optional)",
       "description": "string (optional)",
       "role": "string (optional)",
-      "framework": "string (optional)",
+      "framework": ["string (optional)"],
       "roundTypes": [
         "string (enum: Coding, FrameworkSpecific, SystemDesign, Behavioural, KnowledgeBased)"
       ],
@@ -498,7 +498,7 @@ Assume the base URL for all endpoints is `/api`.
 
 ### GET /interviews
 
-*   **Description**: Retrieves all interviews for the authenticated user (where they are the interviewee).
+*   **Description**: Retrieves all interviews for the authenticated user - includes both interviews where the user is the interviewee and interviews for companies owned by or employing the user.
 *   **Access**: Private (Authenticated User)
 *   **Success Response**: `200 OK`
     ```json
@@ -516,9 +516,26 @@ Assume the base URL for all endpoints is `/api`.
               "name": "TechCorp"
             }
           },
-          "user_id": "60f7a9b0c9a5d2001c8e9e9d",
+          "user_id": {
+            "_id": "60f7a9b0c9a5d2001c8e9e9d",
+            "name": "John Doe",
+            "email": "john.doe@example.com"
+          },
           "time": "14:00",
-          "date": "2023-07-15T00:00:00.000Z"
+          "date": "2023-07-15T00:00:00.000Z",
+          "rounds": [
+            {
+              "type": "Coding",
+              "score": 85,
+              "remarks": "Good problem-solving skills",
+              "status": "completed"
+            },
+            {
+              "type": "SystemDesign",
+              "status": "pending"
+            }
+          ],
+          "role": "interviewee"
         },
         {
           "_id": "60f7a9b0c9a5d2001c8e9e9e",
@@ -531,13 +548,27 @@ Assume the base URL for all endpoints is `/api`.
               "name": "DesignStudio"
             }
           },
-          "user_id": "60f7a9b0c9a5d2001c8e9e9d",
+          "user_id": {
+            "_id": "60f7a9b0c9a5d2001c8e9e9h",
+            "name": "Jane Smith",
+            "email": "jane.smith@example.com"
+          },
           "time": "10:30",
-          "date": "2023-07-20T00:00:00.000Z"
+          "date": "2023-07-20T00:00:00.000Z",
+          "rounds": [
+            {
+              "type": "Behavioural",
+              "status": "pending"
+            }
+          ],
+          "role": "interviewer"
         }
       ]
     }
     ```
+*   **Notes**: 
+    * Each interview includes a `role` field indicating whether the user is an "interviewee" or "interviewer"
+    * "interviewer" means the user is either the owner of or employed by the company conducting the interview
 *   **Error Response**: `500 Internal Server Error` (e.g., `INTERNAL_SERVER_ERROR`)
 
 ### POST /interviews
@@ -548,16 +579,14 @@ Assume the base URL for all endpoints is `/api`.
     ```json
     {
       "job_id": "string (required, ObjectId)",
-      "user_id": "string (required, ObjectId - the interviewee)",
-      "time": "string (required)",
-      "date": "string (required, ISO format e.g., YYYY-MM-DD)"
+      "user_id": "string (required, ObjectId - the interviewee)"
     }
     ```
 *   **Success Response**: `201 Created`
     ```json
     {
       "status": "success",
-      "data": /* Newly created Interview object with populated job_id (company name) and user_id (name, email) */
+      "data": /* Newly created Interview object with populated job_id (company name) and complete user_id object */
     }
     ```
 *   **Error Responses**:
@@ -595,6 +624,18 @@ Assume the base URL for all endpoints is `/api`.
         },
         "time": "14:00",
         "date": "2023-07-15T00:00:00.000Z",
+        "rounds": [
+          {
+            "type": "Coding",
+            "score": 85,
+            "remarks": "Good problem-solving skills",
+            "status": "completed"
+          },
+          {
+            "type": "SystemDesign",
+            "status": "pending"
+          }
+        ],
         "userRole": "interviewee"
       }
     }
@@ -620,7 +661,7 @@ Assume the base URL for all endpoints is `/api`.
     ```json
     {
       "status": "success",
-      "data": /* Updated Interview object with populated job_id (company name) and user_id (name, email) */
+      "data": /* Updated Interview object with populated job_id (company name) and complete user_id object */
     }
     ```
 *   **Error Responses**:
@@ -650,7 +691,7 @@ Assume the base URL for all endpoints is `/api`.
     ```json
     {
       "status": "success",
-      "data": /* Updated Interview object with populated job_id (company name) and user_id (name, email) */
+      "data": /* Updated Interview object with populated job_id (company name) and complete user_id object */
     }
     ```
 *   **Error Responses**:
@@ -674,4 +715,56 @@ Assume the base URL for all endpoints is `/api`.
     *   `400 Bad Request` (e.g., `INVALID_ID`)
     *   `403 Forbidden` (e.g., `ACCESS_DENIED`)
     *   `404 Not Found` (e.g., `INTERVIEW_NOT_FOUND`)
-    *   `500 Internal Server Error` (e.g., `INTERNAL_SERVER_ERROR`) 
+    *   `500 Internal Server Error` (e.g., `INTERNAL_SERVER_ERROR`)
+
+---
+
+## User Routes (`/users`)
+
+### GET /users/email/:email
+
+*   **Description**: Retrieves a user by their email address.
+*   **Access**: Private (Authenticated User)
+*   **Success Response**: `200 OK`
+    ```json
+    {
+      "status": "success",
+      "data": {
+        "_id": "60f7a9b0c9a5d2001c8e9e9e",
+        "name": "John Doe",
+        "email": "john.doe@example.com"
+      }
+    }
+    ```
+*   **Error Responses**:
+    *   `400 Bad Request` (e.g., `MISSING_EMAIL`)
+    *   `404 Not Found` (e.g., `USER_NOT_FOUND`)
+    *   `500 Internal Server Error` (e.g., `INTERNAL_SERVER_ERROR`)
+
+### PUT /users/:id
+
+*   **Description**: Updates a user's details. Users can only update their own profile.
+*   **Access**: Private (Authenticated User)
+*   **Request Body**:
+    ```json
+    {
+      "name": "string (required)"
+    }
+    ```
+*   **Success Response**: `200 OK`
+    ```json
+    {
+      "status": "success",
+      "data": {
+        "_id": "60f7a9b0c9a5d2001c8e9e9e",
+        "name": "Updated Name",
+        "email": "john.doe@example.com"
+      },
+      "message": "User details updated successfully"
+    }
+    ```
+*   **Error Responses**:
+    *   `400 Bad Request` (e.g., `INVALID_ID`, `INVALID_NAME`)
+    *   `403 Forbidden` (e.g., `ACCESS_DENIED` - when trying to update another user's profile)
+    *   `404 Not Found` (e.g., `USER_NOT_FOUND`)
+    *   `500 Internal Server Error` (e.g., `INTERNAL_SERVER_ERROR`)
