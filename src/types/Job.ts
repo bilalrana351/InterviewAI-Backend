@@ -13,6 +13,7 @@ export interface Round {
   type: RoundType;
   score?: number;
   remarks?: string;
+  status?: string;
 }
 
 export interface IJob extends Document {
@@ -20,7 +21,7 @@ export interface IJob extends Document {
   description: string;
   role: string;
   framework: string;
-  rounds: Round[];
+  roundTypes: RoundType[];
   deadline: Date;
   company_id: ICompany['_id'];
 }

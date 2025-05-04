@@ -60,7 +60,7 @@ export const getAllJobs = async (req: AuthenticatedRequest, res: Response): Prom
 export const createJob = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
   try {
     const userId = req.user._id;
-    const { name, description, company_id, role, framework, rounds, deadline } = req.body;
+    const { name, description, company_id, role, framework, roundTypes, deadline } = req.body;
     
     // Validate required fields
     if (!name || !description || !company_id || !role || !framework || !deadline) {
@@ -80,12 +80,12 @@ export const createJob = async (req: AuthenticatedRequest, res: Response): Promi
       });
     }
     
-    // Validate rounds if provided
-    if (rounds && !Array.isArray(rounds)) {
+    // Validate roundTypes if provided
+    if (roundTypes && !Array.isArray(roundTypes)) {
       return res.status(400).json({
         status: 'error',
         code: 'INVALID_FORMAT',
-        message: 'Rounds must be an array'
+        message: 'Round types must be an array'
       });
     }
     
@@ -133,7 +133,7 @@ export const createJob = async (req: AuthenticatedRequest, res: Response): Promi
       company_id,
       role,
       framework,
-      rounds: rounds || [],
+      roundTypes: roundTypes || [],
       deadline
     });
     
@@ -277,7 +277,7 @@ export const updateJob = async (req: AuthenticatedRequest, res: Response): Promi
     }
     
     // Permitted fields to update
-    const allowedUpdates = ['name', 'description', 'role', 'framework', 'rounds', 'deadline'];
+    const allowedUpdates = ['name', 'description', 'role', 'framework', 'roundTypes', 'deadline'];
     
     // Filter updates to only include allowed fields
     const filteredUpdates = Object.keys(updates)
@@ -296,13 +296,13 @@ export const updateJob = async (req: AuthenticatedRequest, res: Response): Promi
       });
     }
     
-    // Validate rounds if provided
-    if (filteredUpdates.rounds !== undefined) {
-      if (!Array.isArray(filteredUpdates.rounds)) {
+    // Validate roundTypes if provided
+    if (filteredUpdates.roundTypes !== undefined) {
+      if (!Array.isArray(filteredUpdates.roundTypes)) {
         return res.status(400).json({
           status: 'error',
           code: 'INVALID_FORMAT',
-          message: 'Rounds must be an array'
+          message: 'Round types must be an array'
         });
       }
     }

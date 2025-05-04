@@ -47,12 +47,8 @@ Below are the data models used throughout the API:
   "description": "string",
   "role": "string",
   "framework": "string",
-  "rounds": [
-    {
-      "type": "string (enum: Coding, FrameworkSpecific, SystemDesign, Behavioural, KnowledgeBased)",
-      "score": "number (optional)",
-      "remarks": "string (optional)"
-    }
+  "roundTypes": [
+    "string (enum: Coding, FrameworkSpecific, SystemDesign, Behavioural, KnowledgeBased)"
   ],
   "deadline": "Date (ISO format)",
   "company_id": "string (ObjectId, references Company)"
@@ -67,7 +63,15 @@ Below are the data models used throughout the API:
   "job_id": "string (ObjectId, references Job)",
   "user_id": "string (ObjectId, references User)",
   "time": "string",
-  "date": "Date (ISO format)"
+  "date": "Date (ISO format)",
+  "rounds": [
+    {
+      "type": "string (enum: Coding, FrameworkSpecific, SystemDesign, Behavioural, KnowledgeBased)",
+      "score": "number (optional)",
+      "remarks": "string (optional)",
+      "status": "string (optional)"
+    }
+  ]
 }
 ```
 
@@ -404,12 +408,8 @@ Assume the base URL for all endpoints is `/api`.
       "description": "string (required)",
       "role": "string (required)",
       "framework": "string (required)",
-      "rounds": [
-        {
-          "type": "string (enum: Coding, FrameworkSpecific, SystemDesign, Behavioural, KnowledgeBased)",
-          "score": "number (optional)",
-          "remarks": "string (optional)"
-        }
+      "roundTypes": [
+        "string (enum: Coding, FrameworkSpecific, SystemDesign, Behavioural, KnowledgeBased)"
       ],
       "deadline": "string (required, ISO format e.g., YYYY-MM-DD)",
       "company_id": "string (required, ObjectId)"
@@ -456,12 +456,8 @@ Assume the base URL for all endpoints is `/api`.
       "description": "string (optional)",
       "role": "string (optional)",
       "framework": "string (optional)",
-      "rounds": [
-        {
-          "type": "string (enum: Coding, FrameworkSpecific, SystemDesign, Behavioural, KnowledgeBased)",
-          "score": "number (optional)",
-          "remarks": "string (optional)"
-        }
+      "roundTypes": [
+        "string (enum: Coding, FrameworkSpecific, SystemDesign, Behavioural, KnowledgeBased)"
       ],
       "deadline": "string (optional, ISO format e.g., YYYY-MM-DD)"
     }
@@ -629,6 +625,36 @@ Assume the base URL for all endpoints is `/api`.
     ```
 *   **Error Responses**:
     *   `400 Bad Request` (e.g., `INVALID_ID`, `MISSING_UPDATE_FIELDS`)
+    *   `403 Forbidden` (e.g., `ACCESS_DENIED`)
+    *   `404 Not Found` (e.g., `INTERVIEW_NOT_FOUND`)
+    *   `500 Internal Server Error` (e.g., `INTERNAL_SERVER_ERROR`)
+
+### PUT /interviews/:id/rounds
+
+*   **Description**: Updates the rounds data of a specific interview.
+*   **Access**: Private (Company Owner or Employee)
+*   **Request Body**:
+    ```json
+    {
+      "rounds": [
+        {
+          "type": "string (enum: Coding, FrameworkSpecific, SystemDesign, Behavioural, KnowledgeBased)",
+          "score": "number (optional)",
+          "remarks": "string (optional)",
+          "status": "string (optional)"
+        }
+      ]
+    }
+    ```
+*   **Success Response**: `200 OK`
+    ```json
+    {
+      "status": "success",
+      "data": /* Updated Interview object with populated job_id (company name) and user_id (name, email) */
+    }
+    ```
+*   **Error Responses**:
+    *   `400 Bad Request` (e.g., `INVALID_ID`, `INVALID_FORMAT`)
     *   `403 Forbidden` (e.g., `ACCESS_DENIED`)
     *   `404 Not Found` (e.g., `INTERVIEW_NOT_FOUND`)
     *   `500 Internal Server Error` (e.g., `INTERNAL_SERVER_ERROR`)

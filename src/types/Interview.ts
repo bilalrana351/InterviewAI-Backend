@@ -1,4 +1,4 @@
-import { IJob } from "./Job";
+import { IJob, Round } from "./Job";
 import { Document } from "mongoose";
 import { IUser } from "./User";
 
@@ -7,4 +7,5 @@ export interface IInterview extends Document {
   user_id: IUser['_id'];
   time: string;
   date: Date;
+  rounds: Round[];
 }

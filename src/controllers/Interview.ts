@@ -117,12 +117,21 @@ export const createInterview = async (req: AuthenticatedRequest, res: Response):
       });
     }
     
+    // Initialize rounds based on job's roundTypes
+    const rounds = job.roundTypes.map(type => ({
+      type,
+      score: undefined,
+      remarks: undefined,
+      status: 'pending'
+    }));
+    
     // Create the interview
     const newInterview = new Interview({
       job_id,
       user_id,
       time,
-      date: new Date(date)
+      date: new Date(date),
+      rounds
     });
     
     await newInterview.save();
@@ -392,6 +401,99 @@ export const deleteInterview = async (req: AuthenticatedRequest, res: Response):
       status: 'error',
       code: 'INTERNAL_SERVER_ERROR',
       message: 'Failed to delete interview'
+    });
+  }
+};
+
+// PUT /api/interviews/:id/rounds - Update interview rounds (only for company owners or employees)
+export const updateInterviewRounds = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
+  try {
+    const userId = req.user._id;
+    const { id: interviewId } = req.params;
+    const { rounds } = req.body;
+    
+    // Check if valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(interviewId)) {
+      return res.status(400).json({
+        status: 'error',
+        code: 'INVALID_ID',
+        message: 'Invalid interview ID format'
+      });
+    }
+    
+    // Validate rounds data
+    if (!rounds || !Array.isArray(rounds)) {
+      return res.status(400).json({
+        status: 'error',
+        code: 'INVALID_FORMAT',
+        message: 'Rounds must be provided as an array'
+      });
+    }
+    
+    // Find the interview
+    const interview = await Interview.findById(interviewId)
+      .populate({
+        path: 'job_id',
+        populate: {
+          path: 'company_id'
+        }
+      });
+      
+    if (!interview) {
+      return res.status(404).json({
+        status: 'error',
+        code: 'INTERVIEW_NOT_FOUND',
+        message: 'Interview not found'
+      });
+    }
+    
+    // Get the company ID from the job
+    const companyId = interview.job_id.company_id._id;
+    
+    // Check if current user is the owner of the company
+    const isOwner = interview.job_id.company_id.owner_id.toString() === userId.toString();
+    
+    // Check if current user is an employee of the company
+    const isEmployee = await Employee.exists({
+      company_id: companyId,
+      user_id: userId
+    });
+    
+    // If user is neither owner nor employee, deny access
+    if (!isOwner && !isEmployee) {
+      return res.status(403).json({
+        status: 'error',
+        code: 'ACCESS_DENIED',
+        message: 'Only company owners or employees can update interview rounds'
+      });
+    }
+    
+    // Update the interview rounds
+    interview.rounds = rounds;
+    await interview.save();
+    
+    // Populate the interview data for the response
+    const populatedInterview = await Interview.findById(interviewId)
+      .populate({
+        path: 'job_id',
+        populate: {
+          path: 'company_id',
+          select: 'name'
+        }
+      })
+      .populate('user_id', 'name email');
+    
+    res.status(200).json({
+      status: 'success',
+      data: populatedInterview
+    });
+    
+  } catch (error) {
+    console.error('Error in updateInterviewRounds:', error);
+    res.status(500).json({
+      status: 'error',
+      code: 'INTERNAL_SERVER_ERROR',
+      message: 'Failed to update interview rounds'
     });
   }
 };
