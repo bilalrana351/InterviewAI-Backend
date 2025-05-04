@@ -45,6 +45,16 @@ Below are the data models used throughout the API:
   "_id": "string (ObjectId)",
   "name": "string",
   "description": "string",
+  "role": "string",
+  "framework": "string",
+  "rounds": [
+    {
+      "type": "string (enum: Coding, FrameworkSpecific, SystemDesign, Behavioural, KnowledgeBased)",
+      "score": "number (optional)",
+      "remarks": "string (optional)"
+    }
+  ],
+  "deadline": "Date (ISO format)",
   "company_id": "string (ObjectId, references Company)"
 }
 ```
@@ -392,6 +402,16 @@ Assume the base URL for all endpoints is `/api`.
     {
       "name": "string (required)",
       "description": "string (required)",
+      "role": "string (required)",
+      "framework": "string (required)",
+      "rounds": [
+        {
+          "type": "string (enum: Coding, FrameworkSpecific, SystemDesign, Behavioural, KnowledgeBased)",
+          "score": "number (optional)",
+          "remarks": "string (optional)"
+        }
+      ],
+      "deadline": "string (required, ISO format e.g., YYYY-MM-DD)",
       "company_id": "string (required, ObjectId)"
     }
     ```
@@ -403,7 +423,7 @@ Assume the base URL for all endpoints is `/api`.
     }
     ```
 *   **Error Responses**:
-    *   `400 Bad Request` (e.g., `MISSING_REQUIRED_FIELDS`, `INVALID_ID`)
+    *   `400 Bad Request` (e.g., `MISSING_REQUIRED_FIELDS`, `INVALID_ID`, `INVALID_DATE_FORMAT`, `INVALID_FORMAT`)
     *   `403 Forbidden` (e.g., `ACCESS_DENIED`)
     *   `404 Not Found` (e.g., `COMPANY_NOT_FOUND`)
     *   `500 Internal Server Error` (e.g., `INTERNAL_SERVER_ERROR`)
@@ -433,7 +453,17 @@ Assume the base URL for all endpoints is `/api`.
     ```json
     {
       "name": "string (optional)",
-      "description": "string (optional)"
+      "description": "string (optional)",
+      "role": "string (optional)",
+      "framework": "string (optional)",
+      "rounds": [
+        {
+          "type": "string (enum: Coding, FrameworkSpecific, SystemDesign, Behavioural, KnowledgeBased)",
+          "score": "number (optional)",
+          "remarks": "string (optional)"
+        }
+      ],
+      "deadline": "string (optional, ISO format e.g., YYYY-MM-DD)"
     }
     ```
 *   **Success Response**: `200 OK`
@@ -444,7 +474,7 @@ Assume the base URL for all endpoints is `/api`.
     }
     ```
 *   **Error Responses**:
-    *   `400 Bad Request` (e.g., `INVALID_ID`)
+    *   `400 Bad Request` (e.g., `INVALID_ID`, `INVALID_DATE_FORMAT`, `INVALID_FORMAT`)
     *   `403 Forbidden` (e.g., `ACCESS_DENIED`)
     *   `404 Not Found` (e.g., `JOB_NOT_FOUND`)
     *   `500 Internal Server Error` (e.g., `INTERNAL_SERVER_ERROR`)

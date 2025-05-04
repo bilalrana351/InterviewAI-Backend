@@ -60,14 +60,32 @@ export const getAllJobs = async (req: AuthenticatedRequest, res: Response): Prom
 export const createJob = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
   try {
     const userId = req.user._id;
-    const { name, description, company_id } = req.body;
+    const { name, description, company_id, role, framework, rounds, deadline } = req.body;
     
     // Validate required fields
-    if (!name || !description || !company_id) {
+    if (!name || !description || !company_id || !role || !framework || !deadline) {
       return res.status(400).json({
         status: 'error',
         code: 'MISSING_REQUIRED_FIELDS',
-        message: 'Job name, description, and company ID are required'
+        message: 'Job name, description, company ID, role, framework, and deadline are required'
+      });
+    }
+    
+    // Check if deadline is a valid date
+    if (isNaN(Date.parse(deadline))) {
+      return res.status(400).json({
+        status: 'error',
+        code: 'INVALID_DATE_FORMAT',
+        message: 'Deadline must be a valid date'
+      });
+    }
+    
+    // Validate rounds if provided
+    if (rounds && !Array.isArray(rounds)) {
+      return res.status(400).json({
+        status: 'error',
+        code: 'INVALID_FORMAT',
+        message: 'Rounds must be an array'
       });
     }
     
@@ -112,7 +130,11 @@ export const createJob = async (req: AuthenticatedRequest, res: Response): Promi
     const newJob = new Job({
       name,
       description,
-      company_id
+      company_id,
+      role,
+      framework,
+      rounds: rounds || [],
+      deadline
     });
     
     await newJob.save();
@@ -254,15 +276,43 @@ export const updateJob = async (req: AuthenticatedRequest, res: Response): Promi
       });
     }
     
-    // Prevent updating the company_id
-    const { _id, company_id, ...allowedUpdates } = updates;
+    // Permitted fields to update
+    const allowedUpdates = ['name', 'description', 'role', 'framework', 'rounds', 'deadline'];
+    
+    // Filter updates to only include allowed fields
+    const filteredUpdates = Object.keys(updates)
+      .filter(key => allowedUpdates.includes(key))
+      .reduce((obj, key) => {
+        obj[key] = updates[key];
+        return obj;
+      }, {} as Record<string, any>);
+    
+    // Check if deadline is a valid date
+    if (filteredUpdates.deadline && isNaN(Date.parse(filteredUpdates.deadline))) {
+      return res.status(400).json({
+        status: 'error',
+        code: 'INVALID_DATE_FORMAT',
+        message: 'Deadline must be a valid date'
+      });
+    }
+    
+    // Validate rounds if provided
+    if (filteredUpdates.rounds !== undefined) {
+      if (!Array.isArray(filteredUpdates.rounds)) {
+        return res.status(400).json({
+          status: 'error',
+          code: 'INVALID_FORMAT',
+          message: 'Rounds must be an array'
+        });
+      }
+    }
     
     // Update the job
     const updatedJob = await Job.findByIdAndUpdate(
       jobId,
-      { $set: allowedUpdates },
-      { new: true, runValidators: true }
-    );
+      filteredUpdates,
+      { new: true }
+    ).populate('company_id');
     
     res.status(200).json({
       status: 'success',
