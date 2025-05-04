@@ -6,7 +6,8 @@
     "start": "node dist/index.js",
     "clean": "rm -rf dist",
     "build": "npm run clean && tsc",
-    "dev": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/index.ts"
+    "dev": "nodemon --exec npx ts-node src/index.ts",
+    "worker": "ts-node src/workers/codeEvaluation.worker.ts"
   },
   "keywords": [],
   "author": "",
