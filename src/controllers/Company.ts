@@ -33,16 +33,56 @@ export const getAllCompanies = async (req: AuthenticatedRequest, res: Response) 
       _id: { $in: interviewCompanyIds }
     });
     
-    // Combine companies into categories
-    const allCompanies = {
-      owned: ownedCompanies,
-      employedAt: employeeCompanies,
-      interviewing: interviewCompanies
-    };
+    // Format companies with role field
+    const formattedOwnedCompanies = ownedCompanies.map(company => ({
+      ...company.toObject(),
+      role: 'owner'
+    }));
+    
+    const formattedEmployeeCompanies = employeeCompanies.map(company => ({
+      ...company.toObject(),
+      role: 'employee'
+    }));
+    
+    const formattedInterviewCompanies = interviewCompanies.map(company => ({
+      ...company.toObject(),
+      role: 'interviewing'
+    }));
+    
+    // Combine all companies into a single flat array
+    const allCompanies = [
+      ...formattedOwnedCompanies,
+      ...formattedEmployeeCompanies,
+      ...formattedInterviewCompanies
+    ];
+    
+    // Remove duplicate companies (keeping the highest priority role)
+    // Priority: owner > employee > interviewing
+    const uniqueCompanies = allCompanies.reduce((unique, company) => {
+      const existingIndex = unique.findIndex(
+        item => item._id.toString() === company._id.toString()
+      );
+      
+      if (existingIndex === -1) {
+        // Company doesn't exist in unique array, add it
+        unique.push(company);
+      } else {
+        // Company exists, keep the one with higher priority role
+        const existingRole = unique[existingIndex].role;
+        if (
+          (company.role === 'owner') || 
+          (company.role === 'employee' && existingRole === 'interviewing')
+        ) {
+          unique[existingIndex] = company;
+        }
+      }
+      
+      return unique;
+    }, [] as any[]);
     
     res.status(200).json({
       status: 'success',
-      data: allCompanies
+      data: uniqueCompanies
     });
   } catch (error) {
     console.error('Error in getAllCompanies:', error);

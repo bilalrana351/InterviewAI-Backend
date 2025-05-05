@@ -12,8 +12,8 @@ export const getAllInterviews = async (req: AuthenticatedRequest, res: Response)
   try {
     const userId = req.user.id;
     
-    // Find all interviews where the user is the interviewee
-    const interviews = await Interview.find({ user_id: userId })
+    // 1. Find all interviews where the user is the interviewee
+    const intervieweeInterviews = await Interview.find({ user_id: userId })
       .populate({
         path: 'job_id',
         populate: {
@@ -21,11 +21,55 @@ export const getAllInterviews = async (req: AuthenticatedRequest, res: Response)
           select: 'name'
         }
       })
+      .populate('user_id')
       .sort({ date: 1 }); // Sort by date, upcoming first
+    
+    // Add role to each interview
+    const intervieweeResults = intervieweeInterviews.map(interview => ({
+      ...interview.toObject(),
+      role: 'interviewee'
+    }));
+    
+    // 2. Find companies owned by the user
+    const ownedCompanies = await Company.find({ owner_id: userId });
+    const ownedCompanyIds = ownedCompanies.map(company => company._id);
+    
+    // 3. Find companies where user is an employee
+    const employeeRecords = await Employee.find({ user_id: userId });
+    const employeeCompanyIds = employeeRecords.map(record => record.company_id);
+    
+    // 4. Find jobs from these companies
+    const companyIds = [...ownedCompanyIds, ...employeeCompanyIds];
+    const jobs = await Job.find({ company_id: { $in: companyIds } });
+    const jobIds = jobs.map(job => job._id);
+    
+    // 5. Find interviews for these jobs (excluding where user is the interviewee)
+    const interviewerInterviews = await Interview.find({
+      job_id: { $in: jobIds },
+      user_id: { $ne: userId } // Exclude interviews where user is the interviewee
+    })
+      .populate({
+        path: 'job_id',
+        populate: {
+          path: 'company_id',
+          select: 'name'
+        }
+      })
+      .populate('user_id')
+      .sort({ date: 1 });
+    
+    // Add role to each interview
+    const interviewerResults = interviewerInterviews.map(interview => ({
+      ...interview.toObject(),
+      role: 'interviewer'
+    }));
+    
+    // 6. Combine results
+    const allInterviews = [...intervieweeResults, ...interviewerResults];
     
     res.status(200).json({
       status: 'success',
-      data: interviews
+      data: allInterviews
     });
   } catch (error) {
     console.error('Error in getAllInterviews:', error);
@@ -41,14 +85,14 @@ export const getAllInterviews = async (req: AuthenticatedRequest, res: Response)
 export const createInterview = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
   try {
     const userId = req.user._id;
-    const { job_id, user_id, time, date } = req.body;
+    const { job_id, user_id } = req.body;
     
     // Validate required fields
-    if (!job_id || !user_id || !time || !date) {
+    if (!job_id || !user_id) {
       return res.status(400).json({
         status: 'error',
         code: 'MISSING_REQUIRED_FIELDS',
-        message: 'Job ID, User ID, time, and date are required'
+        message: 'Job ID, User ID are required'
       });
     }
     
@@ -106,7 +150,6 @@ export const createInterview = async (req: AuthenticatedRequest, res: Response):
     const existingInterview = await Interview.findOne({
       job_id,
       user_id,
-      date: new Date(date)
     });
     
     if (existingInterview) {
@@ -129,8 +172,6 @@ export const createInterview = async (req: AuthenticatedRequest, res: Response):
     const newInterview = new Interview({
       job_id,
       user_id,
-      time,
-      date: new Date(date),
       rounds
     });
     
@@ -145,7 +186,7 @@ export const createInterview = async (req: AuthenticatedRequest, res: Response):
           select: 'name'
         }
       })
-      .populate('user_id', 'name email');
+      .populate('user_id'); // Fully populate user data
     
     res.status(201).json({
       status: 'success',
@@ -184,7 +225,7 @@ export const getInterviewById = async (req: AuthenticatedRequest, res: Response)
           path: 'company_id'
         }
       })
-      .populate('user_id', 'name email');
+      .populate('user_id'); // Fully populate user data
     
     if (!interview) {
       return res.status(404).json({
@@ -243,7 +284,6 @@ export const updateInterview = async (req: AuthenticatedRequest, res: Response):
   try {
     const userId = req.user._id;
     const { id: interviewId } = req.params;
-    const { time, date } = req.body;
     
     // Check if valid ObjectId
     if (!mongoose.Types.ObjectId.isValid(interviewId)) {
@@ -292,20 +332,9 @@ export const updateInterview = async (req: AuthenticatedRequest, res: Response):
       });
     }
     
-    // Validate at least one field to update
-    if (!time && !date) {
-      return res.status(400).json({
-        status: 'error',
-        code: 'MISSING_UPDATE_FIELDS',
-        message: 'At least one field (time or date) is required for update'
-      });
-    }
-    
     // Prepare update object
     const updateData: any = {};
-    if (time) updateData.time = time;
-    if (date) updateData.date = new Date(date);
-    
+
     // Update the interview
     const updatedInterview = await Interview.findByIdAndUpdate(
       interviewId,
@@ -319,7 +348,7 @@ export const updateInterview = async (req: AuthenticatedRequest, res: Response):
         select: 'name'
       }
     })
-    .populate('user_id', 'name email');
+    .populate('user_id'); // Fully populate user data
     
     res.status(200).json({
       status: 'success',
@@ -481,7 +510,7 @@ export const updateInterviewRounds = async (req: AuthenticatedRequest, res: Resp
           select: 'name'
         }
       })
-      .populate('user_id', 'name email');
+      .populate('user_id'); // Fully populate user data
     
     res.status(200).json({
       status: 'success',

@@ -1,11 +1,22 @@
 import mongoose, { Schema } from 'mongoose';
 import { IInterview } from '../types/Interview';
+import { RoundType } from '../types/Job';
+
+const roundSchema = new Schema({
+  type: { 
+    type: String, 
+    enum: Object.values(RoundType),
+    required: true
+  },
+  score: { type: Number, required: false },
+  remarks: { type: String, required: false },
+  status: { type: String, required: false, default: 'pending' }
+}, { _id: false });
 
 const interviewSchema = new Schema({
   job_id: { type: Schema.Types.ObjectId, ref: 'Job', required: true },
   user_id: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  time: { type: String, required: true },
-  date: { type: Date, required: true }
+  rounds: { type: [roundSchema], required: true, default: [] }
 });
 
 export const Interview = mongoose.model<IInterview>('Interview', interviewSchema);

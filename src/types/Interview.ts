@@ -5,7 +5,5 @@ import { IUser } from "./User";
 export interface IInterview extends Document {
   job_id: IJob['_id'];
   user_id: IUser['_id'];
-  time: string;
-  date: Date;
   rounds: Round[];
 }

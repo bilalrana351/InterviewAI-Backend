@@ -20,7 +20,7 @@ export interface IJob extends Document {
   name: string;
   description: string;
   role: string;
-  framework: string;
+  framework: string[];
   roundTypes: RoundType[];
   deadline: Date;
   company_id: ICompany['_id'];
