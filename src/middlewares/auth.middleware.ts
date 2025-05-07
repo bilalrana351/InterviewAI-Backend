@@ -37,6 +37,8 @@ export const requireAuth = async (
     req.user = sessionResult.user;
     req.user._id = req.user.id
     req.session = sessionResult.session;
+
+    console.log("req.user", req.user)
     
     next();
   } catch (error) {

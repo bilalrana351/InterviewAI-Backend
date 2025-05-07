@@ -10,7 +10,7 @@ import mongoose from 'mongoose';
 export const getAllJobs = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
   try {
     
-    const userId = req.user.id;
+    const userId = req.user._id;
     // 1. Find jobs the user has applied for (has interviews for)
     const userInterviews = await Interview.find({ user_id: userId });
     const appliedJobIds = userInterviews.map(interview => interview.job_id);

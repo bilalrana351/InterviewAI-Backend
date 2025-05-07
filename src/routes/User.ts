@@ -13,7 +13,7 @@ router.get('/email/:email', getUserByEmail);
 router.post('/update', updateUser);
 
 // New route to update user details - requires authentication
-router.put('/:id', requireAuth, updateUserDetails);
+router.put('/:id', updateUserDetails);
 
 router.delete('/delete', deleteUser);
 

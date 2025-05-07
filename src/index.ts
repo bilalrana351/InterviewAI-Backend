@@ -113,7 +113,7 @@ app.get("/health/db", async (req: express.Request, res: express.Response) => {
     database: "disconnected",
   });
 });
-
+app.use(requireAuth)
 app.use("/api/users", userRoutes);
 app.use("/api/companies", companyRoutes);
 app.use("/api/employees", employeeRoutes);
