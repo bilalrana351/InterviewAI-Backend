@@ -1,12 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { auth } from '../lib/auth';
 import { fromNodeHeaders } from 'better-auth/node';
-import { User } from '../models/User';
 export interface AuthenticatedRequest extends Request {
-  dummyUserId?: string;
   user?: {
     id: string;
-    _id?: string;
     email: string;
     name?: string;
     emailVerified: boolean;
@@ -32,17 +29,13 @@ export const requireAuth = async (
     });
 
     if (!sessionResult) {
-      req.dummyUserId = "681b134dc1099d2a69261d6a"
+      return res.status(401).json({ message: 'Unauthorized: No session found' });
     }
 
     // Attach user and session to request for use in route handlers
-    console.log("sessionResult", sessionResult)
-    console.log("we are attaching the user and session to the request")
-    req.user = sessionResult?.user;
-    if (req.user) {
-      req.user._id = req.user.id;
-    }
-    req.session = sessionResult?.session;
+    req.user = sessionResult.user;
+    req.user._id = req.user.id
+    req.session = sessionResult.session;
 
     console.log("req.user", req.user)
     

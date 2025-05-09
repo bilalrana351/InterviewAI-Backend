@@ -6,7 +6,7 @@ import Submission from "../models/Submission";
 export const submitCode = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { code, language, input, output } = req.body;
-    const userId = req.user ? req.user._id : req.dummyUserId;
+    const userId = req.user.id
 
     // Create a submission record
     console.log("I am in the submitCode controller userId", userId)
@@ -44,17 +44,20 @@ export const getSubmission = async (
 ) => {
   try {
     const { submissionId } = req.params;
-    const { user } = req.body;
-    console.log("user", user)
+    const user = req.user;
+    console.log("userwar gai", user)
+    console.log("submissionId", submissionId)
     // if (!user) {
     //   return res
     //     .status(400)
     //     .json({ error: "user is required in the request body" });
     // }
     // Find submission and ensure it belongs to the requesting user
+    console.log("this is the user id", user.id)
+    console.log("this is the submission id", submissionId)
     const submission = await Submission.findOne({
       _id: submissionId,
-      userId: "681b134dc1099d2a69261d6a",
+      userId: user.id,
     });
 
     if (!submission) {
