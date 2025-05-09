@@ -39,6 +39,8 @@ const codeEvaluationWorker = new Worker(
         output,
       });
 
+      console.log("evaluationResult", evaluationResult)
+
       // Update submission with results
       const isCorrect = evaluationResult.stdout?.trim() === output?.trim();
 
@@ -50,7 +52,6 @@ const codeEvaluationWorker = new Worker(
         },
         updatedAt: new Date(),
       });
-
       return {
         submissionId,
         evaluationResult,
