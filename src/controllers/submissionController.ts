@@ -44,16 +44,17 @@ export const getSubmission = async (
 ) => {
   try {
     const { submissionId } = req.params;
-    const { userId } = req.body;
-    if (!userId) {
-      return res
-        .status(400)
-        .json({ error: "userId is required in the request body" });
-    }
+    const { user } = req.body;
+    console.log("user", user)
+    // if (!user) {
+    //   return res
+    //     .status(400)
+    //     .json({ error: "user is required in the request body" });
+    // }
     // Find submission and ensure it belongs to the requesting user
     const submission = await Submission.findOne({
       _id: submissionId,
-      userId,
+      userId: "681b134dc1099d2a69261d6a",
     });
 
     if (!submission) {

@@ -36,6 +36,8 @@ export const requireAuth = async (
     }
 
     // Attach user and session to request for use in route handlers
+    console.log("sessionResult", sessionResult)
+    console.log("we are attaching the user and session to the request")
     req.user = sessionResult?.user;
     if (req.user) {
       req.user._id = req.user.id;

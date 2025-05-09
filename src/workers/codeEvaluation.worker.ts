@@ -41,8 +41,17 @@ const codeEvaluationWorker = new Worker(
 
       console.log("evaluationResult", evaluationResult)
 
+      // Helper to normalize output for comparison
+      function normalizeOutput(str: string | null) {
+        if (!str) return '';
+        // Remove all whitespace (spaces, tabs, newlines, carriage returns)
+        return str.replace(/\s/g, '').trim();
+      }
+      console.log("I am here")
+      console.log('Normalized stdout:', JSON.stringify(normalizeOutput(evaluationResult.stdout)));
+      console.log('Normalized output:', JSON.stringify(normalizeOutput(output)));
       // Update submission with results
-      const isCorrect = evaluationResult.stdout?.trim() === output?.trim();
+      const isCorrect = normalizeOutput(evaluationResult.stdout) === normalizeOutput(output);
 
       await Submission.findByIdAndUpdate(submissionId, {
         status: "completed",
