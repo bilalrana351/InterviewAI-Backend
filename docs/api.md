@@ -854,3 +854,259 @@ Assume the base URL for all endpoints is `/api`.
     *   `403 Forbidden` (e.g., `ACCESS_DENIED` - when trying to update another user's profile)
     *   `404 Not Found` (e.g., `USER_NOT_FOUND`)
     *   `500 Internal Server Error` (e.g., `INTERNAL_SERVER_ERROR`)
+
+---
+
+## Code Submission Routes (`/submissions`)
+
+### POST /submissions
+
+*   **Description**: Submits code for evaluation using Judge0 service. The code is processed asynchronously through a queue system.
+*   **Access**: Private (Authenticated User)
+*   **Request Body**:
+    ```json
+    {
+      "code": "string (required) - The code to be evaluated",
+      "language": "string (required) - Programming language (supported: javascript, python, cpp, java, typescript, csharp, ruby, go, rust, swift)",
+      "input": "string (required) - Input to test the code with",
+      "output": "string (required) - Expected output"
+    }
+    ```
+*   **Success Response**: `200 OK`
+    ```json
+    {
+      "submissionId": "string (ObjectId)",
+      "message": "Code submitted successfully!"
+    }
+    ```
+*   **Error Responses**:
+    *   `400 Bad Request` (e.g., `MISSING_REQUIRED_FIELDS`)
+    *   `500 Internal Server Error` (e.g., `FAILED_TO_SUBMIT_CODE`)
+
+### GET /submissions/:submissionId
+
+*   **Description**: Retrieves the status and results of a code submission.
+*   **Access**: Private (Authenticated User)
+*   **Request Body**:
+    ```json
+    {
+      "userId": "string (required) - The ID of the user who submitted the code"
+    }
+    ```
+*   **Success Response**: `200 OK`
+    ```json
+    {
+      "_id": "string (ObjectId)",
+      "code": "string",
+      "language": "string",
+      "input": "string",
+      "output": "string",
+      "status": "string (enum: pending, processing, completed, failed)",
+      "userId": "string (ObjectId)",
+      "result": {
+        "stdout": "string | null",
+        "stderr": "string | null",
+        "status": {
+          "id": "number",
+          "description": "string"
+        },
+        "time": "string",
+        "memory": "number",
+        "isCorrect": "boolean"
+      },
+      "createdAt": "string (ISO date)",
+      "updatedAt": "string (ISO date)"
+    }
+    ```
+*   **Error Responses**:
+    *   `400 Bad Request` (e.g., `USER_ID_REQUIRED`)
+    *   `404 Not Found` (e.g., `SUBMISSION_NOT_FOUND`)
+    *   `500 Internal Server Error` (e.g., `FAILED_TO_FETCH_SUBMISSION`)
+
+## Code Submission System Details
+
+### Supported Languages and IDs
+
+The system supports the following programming languages with their corresponding Judge0 IDs:
+
+```json
+{
+  "javascript": 63,
+  "python": 71,
+  "cpp": 54,
+  "java": 62,
+  "typescript": 74,
+  "csharp": 51,
+  "ruby": 72,
+  "go": 60,
+  "rust": 73,
+  "swift": 83
+}
+```
+
+### Submission Status Flow
+
+1. **pending**: Initial state when code is submitted
+2. **processing**: Code is being evaluated by Judge0
+3. **completed**: Evaluation finished successfully
+4. **failed**: Evaluation failed due to an error
+
+### Result Object Structure
+
+The `result` object in the submission response contains:
+
+```json
+{
+  "stdout": "string | null - Program output",
+  "stderr": "string | null - Error output if any",
+  "status": {
+    "id": "number - Judge0 status code",
+    "description": "string - Status description"
+  },
+  "time": "string - Execution time",
+  "memory": "number - Memory usage in bytes",
+  "isCorrect": "boolean - Whether output matches expected output"
+}
+```
+
+### Judge0 Status Codes
+
+Common Judge0 status codes:
+- 1: In Queue
+- 2: Processing
+- 3: Accepted
+- 4: Wrong Answer
+- 5: Time Limit Exceeded
+- 6: Compilation Error
+- 7: Runtime Error (SIGSEGV)
+- 8: Runtime Error (SIGXFSZ)
+- 9: Runtime Error (SIGFPE)
+- 10: Runtime Error (SIGABRT)
+- 11: Runtime Error (NZEC)
+- 12: Runtime Error (Other)
+- 13: Internal Error
+- 14: Exec Format Error
+
+### Example Usage
+
+1. **Submit Code**:
+```bash
+curl -X POST http://localhost:3000/api/submissions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{
+    "code": "def add(a, b):\n    return a + b",
+    "language": "python",
+    "input": "5 3",
+    "output": "8"
+  }'
+```
+
+2. **Poll Results**:
+```bash
+curl -X GET http://localhost:3000/api/submissions/SUBMISSION_ID \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{
+    "userId": "YOUR_USER_ID"
+  }'
+```
+
+### Best Practices
+
+1. **Polling Strategy**:
+   - Start polling after receiving the submissionId
+   - Poll every 1-2 seconds
+   - Continue polling until status is either "completed" or "failed"
+   - Maximum recommended polling duration: 30 seconds
+
+2. **Error Handling**:
+   - Check both the HTTP status code and the submission status
+   - Handle network errors and retry with exponential backoff
+   - Consider the Judge0 status codes for specific error handling
+
+3. **Input/Output Format**:
+   - Ensure input matches the expected format in the code
+   - Handle multiple test cases by separating them with newlines
+   - Consider whitespace and newline characters in output comparison
+
+4. **Resource Management**:
+   - Keep code submissions concise
+   - Avoid infinite loops or resource-intensive operations
+   - Consider time and memory limits of the Judge0 service
+
+### Rate Limiting
+
+The system uses a queue (BullMQ) to manage submissions and prevent overload. Consider implementing client-side rate limiting to avoid overwhelming the system.
+
+### Security Considerations
+
+1. Code submissions are sandboxed by Judge0
+2. Each submission is associated with a user ID
+3. Users can only access their own submissions
+4. Input validation is performed on both client and server side
+
+### Input/Output Handling
+
+The system requires all input and output to be sent as strings, even for numeric values. This is because the Judge0 API expects string values for comparison. Here's how to handle different types of data:
+
+1. **Single Numbers**:
+```json
+{
+  "code": "def add(a, b):\n    return a + b",
+  "language": "python",
+  "input": "5",  // number as string
+  "output": "5"  // number as string
+}
+```
+
+2. **Multiple Numbers**:
+```json
+{
+  "code": "def add(a, b):\n    return a + b",
+  "language": "python",
+  "input": "5 3",  // numbers separated by space
+  "output": "8"    // result as string
+}
+```
+
+3. **Arrays or Complex Data**:
+```json
+{
+  "code": "def sum(arr):\n    return sum(arr)",
+  "language": "python",
+  "input": "1 2 3 4 5",  // numbers as space-separated string
+  "output": "15"         // result as string
+}
+```
+
+#### Important Notes:
+1. Always send numbers as strings in the request
+2. Your code should parse the input string into numbers if needed
+3. Your code should convert the output to a string before returning
+4. The comparison will be done on the string representation of the output
+
+#### Common Input/Output Patterns:
+
+1. **Space-separated numbers**:
+   - Input: `"1 2 3 4 5"`
+   - Output: `"15"`
+
+2. **Newline-separated numbers**:
+   - Input: `"1\n2\n3\n4\n5"`
+   - Output: `"15"`
+
+3. **Matrix input**:
+   - Input: `"1 2 3\n4 5 6\n7 8 9"`
+   - Output: `"45"`
+
+4. **Multiple test cases**:
+   - Input: `"2\n1 2\n3 4"`
+   - Output: `"3\n7"`
+
+#### Best Practices for Input/Output:
+1. Always handle string-to-number conversion in your code
+2. Consider whitespace and newline characters in output
+3. Use consistent formatting for input/output
+4. Handle edge cases (empty input, large numbers, etc.)
+5. Consider precision for floating-point numbers

@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { auth } from '../lib/auth';
 import { fromNodeHeaders } from 'better-auth/node';
-import { User } from '../models/User';
 export interface AuthenticatedRequest extends Request {
   user?: {
     id: string;

@@ -2,21 +2,14 @@ import codeQueue from "../lib/queue";
 import { Response } from "express";
 import { AuthenticatedRequest } from "../types/Requests";
 import Submission from "../models/Submission";
-import { databaseService } from "../services/database.service";
-import mongoose from "mongoose";
-
-mongoose.connect(process.env.MONGODB_URI!, {});
 
 export const submitCode = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { code, language, input, output, userId } = req.body;
-    if (!userId) {
-      return res
-        .status(400)
-        .json({ error: "userId is required in the request body" });
-    }
+    const { code, language, input, output } = req.body;
+    const userId = req.user.id
 
     // Create a submission record
+    console.log("I am in the submitCode controller userId", userId)
     const submission = await Submission.create({
       code,
       language,
@@ -35,7 +28,6 @@ export const submitCode = async (req: AuthenticatedRequest, res: Response) => {
       output,
       userId,
     });
-
     return res.json({
       submissionId: submission._id,
       message: "Code submitted successfully!",
@@ -52,16 +44,20 @@ export const getSubmission = async (
 ) => {
   try {
     const { submissionId } = req.params;
-    const { userId } = req.body;
-    if (!userId) {
-      return res
-        .status(400)
-        .json({ error: "userId is required in the request body" });
-    }
+    const user = req.user;
+    console.log("userwar gai", user)
+    console.log("submissionId", submissionId)
+    // if (!user) {
+    //   return res
+    //     .status(400)
+    //     .json({ error: "user is required in the request body" });
+    // }
     // Find submission and ensure it belongs to the requesting user
+    console.log("this is the user id", user.id)
+    console.log("this is the submission id", submissionId)
     const submission = await Submission.findOne({
       _id: submissionId,
-      userId,
+      userId: user.id,
     });
 
     if (!submission) {
