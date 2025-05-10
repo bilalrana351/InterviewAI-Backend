@@ -16,6 +16,8 @@ const roundSchema = new Schema({
 const interviewSchema = new Schema({
   job_id: { type: Schema.Types.ObjectId, ref: 'Job', required: true },
   user_id: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  cv_url: { type: String, required: false },
+  parsed_cv: { type: String, required: false },
   rounds: { type: [roundSchema], required: true, default: [] }
 });
 

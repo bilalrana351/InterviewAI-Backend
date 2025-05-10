@@ -20,6 +20,7 @@ import {
   AuthenticatedRequest,
 } from "./middlewares/auth.middleware";
 import { systemDesignRoutes } from "./routes/SystemDesign";
+import { cvRoutes } from "./routes/CvUploadAndParse";
 
 const configService = new ConfigService();
 const app = express();
@@ -120,7 +121,9 @@ app.get("/health/db", async (req: express.Request, res: express.Response) => {
     database: "disconnected",
   });
 });
-app.use(requireAuth);
+
+// app.use(requireAuth);
+
 app.use("/api/users", userRoutes);
 app.use("/api/companies", companyRoutes);
 app.use("/api/employees", employeeRoutes);
@@ -128,6 +131,7 @@ app.use("/api/interviews", interviewRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/submissions", submissionRoutes);
 app.use("/api/system-design", systemDesignRoutes);
+app.use("/api/cv", cvRoutes);
 app.use(notFoundMiddleware);
 
 // Error handling middleware - should be last
