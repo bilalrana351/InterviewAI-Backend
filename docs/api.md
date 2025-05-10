@@ -805,6 +805,94 @@ Assume the base URL for all endpoints is `/api`.
 
 ---
 
+## CV Upload and Parsing Routes (`/cv`)
+
+### POST /cv/upload
+
+*   **Description**: Uploads a CV for an interview and processes it with the AI service to extract text.
+*   **Access**: Private (Authenticated User)
+*   **Request Body**:
+    ```json
+    {
+      "interviewId": "string (required, ObjectId referencing Interview)",
+      "cvBase64": "string (required, Base64 encoded CV file)"
+    }
+    ```
+*   **Success Response**: `200 OK`
+    ```json
+    {
+      "status": "success",
+      "data": {
+        "interviewId": "string (ObjectId)",
+        "cvUrl": "string (The path to the saved CV file)",
+        "parsedCv": "string (The extracted markdown text from the CV)"
+      }
+    }
+    ```
+*   **Partial Success Response**: `200 OK` (When upload succeeds but parsing fails)
+    ```json
+    {
+      "status": "partial_success",
+      "message": "CV uploaded successfully but parsing failed",
+      "data": {
+        "interviewId": "string (ObjectId)",
+        "cvUrl": "string (The path to the saved CV file)",
+        "parsedCv": null
+      }
+    }
+    ```
+*   **Error Responses**:
+    *   `400 Bad Request` (e.g., `Interview ID and CV data are required`)
+    *   `404 Not Found` (e.g., `Interview not found`)
+    *   `500 Internal Server Error` (e.g., `Failed to upload CV`)
+
+### GET /cv/:interviewId
+
+*   **Description**: Retrieves the CV URL and parsed text for an interview.
+*   **Access**: Private (Authenticated User)
+*   **Success Response**: `200 OK`
+    ```json
+    {
+      "status": "success",
+      "data": {
+        "interviewId": "string (ObjectId)",
+        "cvUrl": "string (The path to the saved CV file)",
+        "parsedCv": "string or null (The extracted markdown text from the CV, if available)"
+      }
+    }
+    ```
+*   **Error Responses**:
+    *   `400 Bad Request` (e.g., `Interview ID is required`)
+    *   `404 Not Found` (e.g., `Interview not found`, `No CV found for this interview`)
+    *   `500 Internal Server Error` (e.g., `Failed to get CV information`)
+
+### POST /cv/:interviewId/parse
+
+*   **Description**: Parses an existing CV that has already been uploaded for an interview.
+*   **Access**: Private (Authenticated User)
+*   **Success Response**: `200 OK`
+    ```json
+    {
+      "status": "success",
+      "data": {
+        "interviewId": "string (ObjectId)",
+        "cvUrl": "string (The path to the saved CV file)",
+        "parsedCv": "string (The extracted markdown text from the CV)"
+      }
+    }
+    ```
+*   **Error Responses**:
+    *   `400 Bad Request` (e.g., `Interview ID is required`)
+    *   `404 Not Found` (e.g., `Interview not found`, `No CV URL found for this interview`)
+    *   `500 Internal Server Error` (e.g., `Failed to parse CV`)
+
+*   **Process**:
+    1. Checks if the interview has a CV URL
+    2. Sends the CV URL to the AI service for text extraction (using Mistral AI OCR)
+    3. Updates the interview record with the parsed CV text in markdown format
+
+---
+
 ## User Routes (`/users`)
 
 ### GET /users/email/:email

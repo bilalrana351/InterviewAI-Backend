@@ -1,4 +1,5 @@
 import { SystemDesignSubmissionAIRequest, SystemDesignSubmissionAIResponse } from '../types/SystemDesign';
+import { AIParseCVRequest, AIParseCVResponse } from '../types/CV';
 
 /**
  * Service for interacting with the AI microservice
@@ -53,6 +54,45 @@ export class AIService {
     } catch (error) {
       console.error('Error evaluating system design:', error);
       throw new Error('Failed to evaluate system design with AI service');
+    }
+  }
+
+  /**
+   * Parse a CV using the AI service
+   * @param cvUrl URL of the CV to parse
+   * @returns Promise with the parsed CV text
+   */
+  async parseCv(cvUrl: string): Promise<string> {
+    try {
+      const requestPayload: AIParseCVRequest = {
+        cv_url: cvUrl
+      };
+
+      console.log("Data coming in", requestPayload);
+
+      const response = await fetch(`${this.baseUrl}/api/cv-parse`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestPayload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`AI service returned status ${response.status}`);
+      }
+
+      // Get the response data
+      const responseData: AIParseCVResponse = await response.json();
+      
+      if (!responseData.parsed_markdown) {
+        throw new Error('AI service did not return parsed text');
+      }
+
+      return responseData.parsed_markdown;
+    } catch (error) {
+      console.error('Error parsing CV:', error);
+      throw new Error('Failed to parse CV with AI service');
     }
   }
 }
