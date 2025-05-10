@@ -3,12 +3,15 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "node dist/index.js",
+    "start": "concurrently \"node dist/index.js\" \"node dist/workers/codeEvaluation.worker.js\"",
+    "start:server": "node dist/index.js",
+    "start:worker": "node dist/workers/codeEvaluation.worker.js",
     "clean": "rm -rf dist",
     "build": "npm run clean && tsc",
     "dev": "nodemon --exec npx ts-node src/index.ts",
     "worker": "ts-node src/workers/codeEvaluation.worker.ts",
-    "dev:all": "concurrently \"npm run dev\" \"npm run worker\""
+    "dev:all": "concurrently \"npm run dev\" \"npm run worker\"",
+    "start:all": "concurrently \"npm run start:server\" \"npm run start:worker\""
   },
   "keywords": [],
   "author": "",
