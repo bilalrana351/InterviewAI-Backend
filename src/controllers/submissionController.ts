@@ -70,3 +70,24 @@ export const getSubmission = async (
     return res.status(500).json({ error: "Failed to fetch submission" });
   }
 };
+
+export const getInterviewSubmissions = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { interviewId } = req.params;
+
+    const submissions = await Submission.find({ interviewId })
+      .select('code language status result createdAt')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      status: 'success',
+      data: submissions
+    });
+  } catch (error) {
+    console.error('Error fetching interview submissions:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch submissions'
+    });
+  }
+};
