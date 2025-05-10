@@ -5,6 +5,7 @@ import {
   getInterviewById,
   updateInterview,
   deleteInterview,
+  updateInterviewRounds,
 } from '../controllers/Interview';
 
 const router = Router();
@@ -20,6 +21,9 @@ router.get('/:id',  getInterviewById);
 
 // PUT /api/interview/:id - Update an interview by ID
 router.put('/:id',  updateInterview);
+
+// PUT /api/interview/:id/rounds - Update interview rounds
+router.put('/:id/rounds', updateInterviewRounds);
 
 router.delete('/:id',  deleteInterview);
 // DELETE /api/interview/:id - Delete an interview by ID

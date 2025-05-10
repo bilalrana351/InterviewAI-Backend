@@ -699,7 +699,15 @@ Assume the base URL for all endpoints is `/api`.
           "type": "string (enum: Coding, FrameworkSpecific, SystemDesign, Behavioural, KnowledgeBased)",
           "score": "number (optional)",
           "remarks": "string (optional)",
-          "status": "string (optional)"
+          "status": "string (optional)",
+          "submissions": [
+            {
+              "problemId": "string",
+              "score": "number",
+              "status": "string",
+              "submissionId": "string (ObjectId)"
+            }
+          ]
         }
       ]
     }
@@ -708,7 +716,25 @@ Assume the base URL for all endpoints is `/api`.
     ```json
     {
       "status": "success",
-      "data": /* Updated Interview object with populated job_id (company name) and complete user_id object */
+      "data": {
+        "_id": "string (ObjectId)",
+        "rounds": [
+          {
+            "type": "Coding",
+            "score": 85,
+            "status": "completed",
+            "remarks": "Completed 2/3 problems",
+            "submissions": [
+              {
+                "problemId": "string",
+                "score": 100,
+                "status": "completed",
+                "submissionId": "string (ObjectId)"
+              }
+            ]
+          }
+        ]
+      }
     }
     ```
 *   **Error Responses**:
@@ -869,7 +895,9 @@ Assume the base URL for all endpoints is `/api`.
       "code": "string (required) - The code to be evaluated",
       "language": "string (required) - Programming language (supported: javascript, python, cpp, java, typescript, csharp, ruby, go, rust, swift)",
       "input": "string (required) - Input to test the code with",
-      "output": "string (required) - Expected output"
+      "output": "string (required) - Expected output",
+      "interviewId": "string (optional) - ID of the interview if this is part of an interview",
+      "roundIndex": "number (optional) - Index of the round in the interview"
     }
     ```
 *   **Success Response**: `200 OK`
@@ -887,12 +915,6 @@ Assume the base URL for all endpoints is `/api`.
 
 *   **Description**: Retrieves the status and results of a code submission.
 *   **Access**: Private (Authenticated User)
-*   **Request Body**:
-    ```json
-    {
-      "userId": "string (required) - The ID of the user who submitted the code"
-    }
-    ```
 *   **Success Response**: `200 OK`
     ```json
     {
@@ -903,6 +925,8 @@ Assume the base URL for all endpoints is `/api`.
       "output": "string",
       "status": "string (enum: pending, processing, completed, failed)",
       "userId": "string (ObjectId)",
+      "interviewId": "string (ObjectId, optional)",
+      "roundIndex": "number (optional)",
       "result": {
         "stdout": "string | null",
         "stderr": "string | null",
@@ -919,9 +943,92 @@ Assume the base URL for all endpoints is `/api`.
     }
     ```
 *   **Error Responses**:
-    *   `400 Bad Request` (e.g., `USER_ID_REQUIRED`)
     *   `404 Not Found` (e.g., `SUBMISSION_NOT_FOUND`)
     *   `500 Internal Server Error` (e.g., `FAILED_TO_FETCH_SUBMISSION`)
+
+### GET /submissions/interview/:interviewId
+
+*   **Description**: Retrieves all submissions for a specific interview round.
+*   **Access**: Private (Authenticated User)
+*   **Success Response**: `200 OK`
+    ```json
+    {
+      "status": "success",
+      "data": [
+        {
+          "_id": "string (ObjectId)",
+          "code": "string",
+          "language": "string",
+          "status": "string",
+          "result": {
+            "isCorrect": "boolean",
+            "time": "string",
+            "memory": "number"
+          },
+          "createdAt": "string (ISO date)"
+        }
+      ]
+    }
+    ```
+*   **Error Responses**:
+    *   `404 Not Found` (e.g., `INTERVIEW_NOT_FOUND`)
+    *   `500 Internal Server Error` (e.g., `FAILED_TO_FETCH_SUBMISSIONS`)
+
+### PUT /interviews/:id/rounds
+
+*   **Description**: Updates the rounds data of a specific interview.
+*   **Access**: Private (Company Owner or Employee)
+*   **Request Body**:
+    ```json
+    {
+      "rounds": [
+        {
+          "type": "string (enum: Coding, FrameworkSpecific, SystemDesign, Behavioural, KnowledgeBased)",
+          "score": "number (optional)",
+          "remarks": "string (optional)",
+          "status": "string (optional)",
+          "submissions": [
+            {
+              "problemId": "string",
+              "score": "number",
+              "status": "string",
+              "submissionId": "string (ObjectId)"
+            }
+          ]
+        }
+      ]
+    }
+    ```
+*   **Success Response**: `200 OK`
+    ```json
+    {
+      "status": "success",
+      "data": {
+        "_id": "string (ObjectId)",
+        "rounds": [
+          {
+            "type": "Coding",
+            "score": 85,
+            "status": "completed",
+            "remarks": "Completed 2/3 problems",
+            "submissions": [
+              {
+                "problemId": "string",
+                "score": 100,
+                "status": "completed",
+                "submissionId": "string (ObjectId)"
+              }
+            ]
+          }
+        ]
+      }
+    }
+    ```
+*   **Error Responses**:
+    *   `400 Bad Request` (e.g., `INVALID_ID`, `INVALID_FORMAT`)
+    *   `403 Forbidden` (e.g., `ACCESS_DENIED`)
+    *   `404 Not Found` (e.g., `INTERVIEW_NOT_FOUND`)
+    *   `500 Internal Server Error` (e.g., `INTERNAL_SERVER_ERROR`)
 
 ## Code Submission System Details
 

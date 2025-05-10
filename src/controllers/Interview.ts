@@ -437,91 +437,38 @@ export const deleteInterview = async (req: AuthenticatedRequest, res: Response):
 // PUT /api/interviews/:id/rounds - Update interview rounds (only for company owners or employees)
 export const updateInterviewRounds = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
   try {
-    const userId = req.user._id;
-    const { id: interviewId } = req.params;
+    const { id } = req.params;
     const { rounds } = req.body;
-    
-    // Check if valid ObjectId
-    if (!mongoose.Types.ObjectId.isValid(interviewId)) {
-      return res.status(400).json({
-        status: 'error',
-        code: 'INVALID_ID',
-        message: 'Invalid interview ID format'
-      });
-    }
-    
-    // Validate rounds data
+
+    // Validate request body
     if (!rounds || !Array.isArray(rounds)) {
       return res.status(400).json({
         status: 'error',
-        code: 'INVALID_FORMAT',
-        message: 'Rounds must be provided as an array'
+        message: 'Invalid request format. Rounds array is required.'
       });
     }
-    
-    // Find the interview
-    const interview = await Interview.findById(interviewId)
-      .populate({
-        path: 'job_id',
-        populate: {
-          path: 'company_id'
-        }
-      });
-      
+
+    // Find and update the interview
+    const interview = await Interview.findById(id);
     if (!interview) {
       return res.status(404).json({
         status: 'error',
-        code: 'INTERVIEW_NOT_FOUND',
         message: 'Interview not found'
       });
     }
-    
-    // Get the company ID from the job
-    const companyId = interview.job_id.company_id._id;
-    
-    // Check if current user is the owner of the company
-    const isOwner = interview.job_id.company_id.owner_id.toString() === userId.toString();
-    
-    // Check if current user is an employee of the company
-    const isEmployee = await Employee.exists({
-      company_id: companyId,
-      user_id: userId
-    });
-    
-    // If user is neither owner nor employee, deny access
-    if (!isOwner && !isEmployee) {
-      return res.status(403).json({
-        status: 'error',
-        code: 'ACCESS_DENIED',
-        message: 'Only company owners or employees can update interview rounds'
-      });
-    }
-    
-    // Update the interview rounds
+
+    // Update rounds
     interview.rounds = rounds;
     await interview.save();
-    
-    // Populate the interview data for the response
-    const populatedInterview = await Interview.findById(interviewId)
-      .populate({
-        path: 'job_id',
-        populate: {
-          path: 'company_id',
-          select: 'name'
-        }
-      })
-      .populate('user_id'); // Fully populate user data
-    
+
     res.status(200).json({
       status: 'success',
-      data: populatedInterview
+      data: interview
     });
-    
   } catch (error) {
-    console.error('Error in updateInterviewRounds:', error);
+    console.error('Error updating interview rounds:', error);
     res.status(500).json({
       status: 'error',
-      code: 'INTERNAL_SERVER_ERROR',
       message: 'Failed to update interview rounds'
     });
   }
