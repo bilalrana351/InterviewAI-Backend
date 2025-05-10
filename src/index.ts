@@ -19,6 +19,8 @@ import {
   requireAuth,
   AuthenticatedRequest,
 } from "./middlewares/auth.middleware";
+import { systemDesignRoutes } from "./routes/SystemDesign";
+
 const configService = new ConfigService();
 const app = express();
 const PORT = process.env.PORT || DEFAULT_PORT;
@@ -28,10 +30,15 @@ app.use(
     credentials: true,
   })
 );
-app.use(express.urlencoded({ extended: true }));
+
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
 app.use(loggingMiddleware);
+
 app.all("/api/auth/*", toNodeHandler(auth));
-app.use(express.json());
+
+app.use(express.json({ limit: '50mb' }));
+
 app.get("/", (req: express.Request, res: express.Response) => {
   const authHeader = req.headers.authorization;
   console.log("Authorization header:", authHeader);
@@ -113,13 +120,14 @@ app.get("/health/db", async (req: express.Request, res: express.Response) => {
     database: "disconnected",
   });
 });
-app.use(requireAuth)
+app.use(requireAuth);
 app.use("/api/users", userRoutes);
 app.use("/api/companies", companyRoutes);
 app.use("/api/employees", employeeRoutes);
 app.use("/api/interviews", interviewRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/submissions", submissionRoutes);
+app.use("/api/system-design", systemDesignRoutes);
 app.use(notFoundMiddleware);
 
 // Error handling middleware - should be last
