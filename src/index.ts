@@ -122,7 +122,7 @@ app.get("/health/db", async (req: express.Request, res: express.Response) => {
   });
 });
 
-// app.use(requireAuth);
+app.use(requireAuth);
 
 app.use("/api/users", userRoutes);
 app.use("/api/companies", companyRoutes);
