@@ -18,7 +18,9 @@ const interviewSchema = new Schema({
   user_id: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   cv_url: { type: String, required: false },
   parsed_cv: { type: String, required: false },
-  rounds: { type: [roundSchema], required: true, default: [] }
+  rounds: { type: [roundSchema], required: true, default: [] },
+  score: { type: Number, required: false },
+  remarks: { type: String, required: false }
 });
 
 export const Interview = mongoose.model<IInterview>('Interview', interviewSchema);
