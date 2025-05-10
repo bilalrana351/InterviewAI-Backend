@@ -6,6 +6,7 @@ import {
   updateInterview,
   deleteInterview,
   updateInterviewRounds,
+  evaluateFinalInterviewScore,
 } from '../controllers/Interview';
 
 const router = Router();
@@ -25,7 +26,10 @@ router.put('/:id',  updateInterview);
 // PUT /api/interview/:id/rounds - Update interview rounds
 router.put('/:id/rounds', updateInterviewRounds);
 
-router.delete('/:id',  deleteInterview);
+// PUT /api/interview/:id/evaluate-final - Calculate final interview score
+router.put('/:id/evaluate-final', evaluateFinalInterviewScore);
+
 // DELETE /api/interview/:id - Delete an interview by ID
+router.delete('/:id',  deleteInterview);
 
 export const interviewRoutes = router;

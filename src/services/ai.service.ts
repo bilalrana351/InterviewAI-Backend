@@ -1,5 +1,6 @@
 import { SystemDesignSubmissionAIRequest, SystemDesignSubmissionAIResponse } from '../types/SystemDesign';
 import { AIParseCVRequest, AIParseCVResponse } from '../types/CV';
+import { FinalInterviewRequest, FinalInterviewResponse } from '../types/Interview';
 
 /**
  * Service for interacting with the AI microservice
@@ -93,6 +94,39 @@ export class AIService {
     } catch (error) {
       console.error('Error parsing CV:', error);
       throw new Error('Failed to parse CV with AI service');
+    }
+  }
+
+  /**
+   * Evaluate the final interview score based on all rounds, CV, and job details
+   * @param interviewData Object containing job details, CV data, and rounds information
+   * @returns Promise with the final evaluation score and remarks
+   */
+  async evaluateFinalInterview(interviewData: FinalInterviewRequest): Promise<FinalInterviewResponse> {
+    try {
+      const response = await fetch(`${this.baseUrl}/api/interview/evaluate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(interviewData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`AI service returned status ${response.status}`);
+      }
+
+      // Get the response data
+      const responseData: FinalInterviewResponse = await response.json();
+      
+      if (responseData.score === undefined || !responseData.remarks) {
+        throw new Error('AI service did not return complete evaluation');
+      }
+
+      return responseData;
+    } catch (error) {
+      console.error('Error evaluating final interview:', error);
+      throw new Error('Failed to evaluate final interview score with AI service');
     }
   }
 }

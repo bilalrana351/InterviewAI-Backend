@@ -20,7 +20,8 @@ const interviewSchema = new Schema({
   parsed_cv: { type: String, required: false },
   rounds: { type: [roundSchema], required: true, default: [] },
   score: { type: Number, required: false },
-  remarks: { type: String, required: false }
+  remarks: { type: String, required: false },
+  status: { type: String, required: false, default: 'pending' }
 });
 
 export const Interview = mongoose.model<IInterview>('Interview', interviewSchema);
