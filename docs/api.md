@@ -743,6 +743,35 @@ Assume the base URL for all endpoints is `/api`.
     *   `404 Not Found` (e.g., `INTERVIEW_NOT_FOUND`)
     *   `500 Internal Server Error` (e.g., `INTERNAL_SERVER_ERROR`)
 
+### PUT /interviews/:id/evaluate-final
+
+*   **Description**: Evaluates the final interview score based on all completed rounds, job details, and candidate CV.
+*   **Access**: Private (Company Owner, Employee, or Interviewee)
+*   **Conditions**:
+    * All interview rounds must be completed
+    * Candidate CV must be uploaded and parsed
+*   **Success Response**: `200 OK`
+    ```json
+    {
+      "status": "success",
+      "data": {
+        "score": 85,
+        "remarks": "Detailed evaluation of candidate performance across all rounds..."
+      }
+    }
+    ```
+*   **Error Responses**:
+    *   `400 Bad Request` (e.g., `INCOMPLETE_ROUNDS`, `CV_NOT_AVAILABLE`)
+    *   `403 Forbidden` (e.g., `ACCESS_DENIED`)
+    *   `404 Not Found` (e.g., `INTERVIEW_NOT_FOUND`)
+    *   `500 Internal Server Error` (e.g., `INTERNAL_SERVER_ERROR`)
+
+*   **Process**:
+    1. Checks if all interview rounds are completed
+    2. Retrieves job details, CV data, and round information
+    3. Sends data to the AI service for comprehensive evaluation
+    4. Updates the interview with final score, remarks, and sets status to 'completed'
+
 ### DELETE /interviews/:id
 
 *   **Description**: Deletes a specific interview.
@@ -1061,62 +1090,6 @@ Assume the base URL for all endpoints is `/api`.
 *   **Error Responses**:
     *   `404 Not Found` (e.g., `INTERVIEW_NOT_FOUND`)
     *   `500 Internal Server Error` (e.g., `FAILED_TO_FETCH_SUBMISSIONS`)
-
-### PUT /interviews/:id/rounds
-
-*   **Description**: Updates the rounds data of a specific interview.
-*   **Access**: Private (Company Owner or Employee)
-*   **Request Body**:
-    ```json
-    {
-      "rounds": [
-        {
-          "type": "string (enum: Coding, FrameworkSpecific, SystemDesign, Behavioural, KnowledgeBased)",
-          "score": "number (optional)",
-          "remarks": "string (optional)",
-          "status": "string (optional)",
-          "submissions": [
-            {
-              "problemId": "string",
-              "score": "number",
-              "status": "string",
-              "submissionId": "string (ObjectId)"
-            }
-          ]
-        }
-      ]
-    }
-    ```
-*   **Success Response**: `200 OK`
-    ```json
-    {
-      "status": "success",
-      "data": {
-        "_id": "string (ObjectId)",
-        "rounds": [
-          {
-            "type": "Coding",
-            "score": 85,
-            "status": "completed",
-            "remarks": "Completed 2/3 problems",
-            "submissions": [
-              {
-                "problemId": "string",
-                "score": 100,
-                "status": "completed",
-                "submissionId": "string (ObjectId)"
-              }
-            ]
-          }
-        ]
-      }
-    }
-    ```
-*   **Error Responses**:
-    *   `400 Bad Request` (e.g., `INVALID_ID`, `INVALID_FORMAT`)
-    *   `403 Forbidden` (e.g., `ACCESS_DENIED`)
-    *   `404 Not Found` (e.g., `INTERVIEW_NOT_FOUND`)
-    *   `500 Internal Server Error` (e.g., `INTERNAL_SERVER_ERROR`)
 
 ## Code Submission System Details
 

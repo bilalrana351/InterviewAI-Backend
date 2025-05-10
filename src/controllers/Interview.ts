@@ -6,6 +6,8 @@ import { Company } from '../models/Company';
 import { Employee } from '../models/Employee';
 import { User } from '../models/User';
 import mongoose from 'mongoose';
+import { aiService } from '../services/ai.service';
+import { FinalInterviewRequest } from '../types/Interview';
 
 // GET /api/interviews - Get all interviews for the user
 export const getAllInterviews = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
@@ -457,8 +459,14 @@ export const updateInterviewRounds = async (req: AuthenticatedRequest, res: Resp
       });
     }
 
+    // Update only the relevant round and make sure that the rest are not deleted 
+    const updatedRounds = interview.rounds.map(round => {
+      const updatedRound = rounds.find(r => r.type === round.type);
+      return updatedRound ? { ...round, ...updatedRound } : round;
+    });
+
     // Update rounds
-    interview.rounds = rounds;
+    interview.rounds = updatedRounds;
     await interview.save();
 
     res.status(200).json({
@@ -470,6 +478,109 @@ export const updateInterviewRounds = async (req: AuthenticatedRequest, res: Resp
     res.status(500).json({
       status: 'error',
       message: 'Failed to update interview rounds'
+    });
+  }
+};
+
+// PUT /api/interviews/:id/evaluate-final - Calculate final interview score
+export const evaluateFinalInterviewScore = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
+  try {
+    const userId = req.user._id;
+    const { id: interviewId } = req.params;
+    
+    // Check if valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(interviewId)) {
+      return res.status(400).json({
+        status: 'error',
+        code: 'INVALID_ID',
+        message: 'Invalid interview ID format'
+      });
+    }
+    
+    // Find the interview with populated data
+    const interview = await Interview.findById(interviewId)
+      .populate({
+        path: 'job_id',
+        populate: {
+          path: 'company_id'
+        }
+      })
+      .populate('user_id');
+    
+    if (!interview) {
+      return res.status(404).json({
+        status: 'error',
+        code: 'INTERVIEW_NOT_FOUND',
+        message: 'Interview not found'
+      });
+    }
+    
+    // Check if the current user is the interviewee or an authorized person
+    const isInterviewee = interview.user_id._id.toString() === userId.toString();
+    const companyId = interview.job_id.company_id._id;
+    const isOwner = interview.job_id.company_id.owner_id.toString() === userId.toString();
+    const isEmployee = await Employee.exists({
+      company_id: companyId,
+      user_id: userId
+    });
+    
+    // If user is neither owner nor employee nor interviewee, deny access
+    if (!isOwner && !isEmployee && !isInterviewee) {
+      return res.status(403).json({
+        status: 'error',
+        code: 'ACCESS_DENIED',
+        message: 'You do not have permission to evaluate this interview'
+      });
+    }
+
+    // Check if all rounds are completed
+    const allRoundsCompleted = interview.rounds.every(round => round.status === 'completed');
+    if (!allRoundsCompleted) {
+      return res.status(400).json({
+        status: 'error',
+        code: 'INCOMPLETE_ROUNDS',
+        message: 'All interview rounds must be completed before final evaluation'
+      });
+    }
+
+    // Prepare the data for AI evaluation
+    const job = interview.job_id;
+    const jobFramework = job.framework.join(', ');
+
+    const finalInterviewData: FinalInterviewRequest = {
+      job_description: job.description,
+      job_role: job.role,
+      framework: jobFramework,
+      parsed_cv: interview.parsed_cv,
+      rounds: interview.rounds.map(round => ({
+        type: round.type,
+        score: round.score || 0,
+        remarks: round.remarks || 'No remarks provided'
+      }))
+    };
+
+    // Call the AI service to evaluate
+    const evaluation = await aiService.evaluateFinalInterview(finalInterviewData);
+
+    // Update the interview with the evaluation results
+    interview.score = evaluation.score;
+    interview.remarks = evaluation.remarks;
+    interview.status = 'completed';
+    await interview.save();
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        score: evaluation.score,
+        remarks: evaluation.remarks
+      }
+    });
+  } catch (error) {
+    console.error('Error evaluating final interview:', error);
+    res.status(500).json({
+      status: 'error',
+      code: 'INTERNAL_SERVER_ERROR',
+      message: 'Failed to evaluate final interview'
     });
   }
 };
