@@ -10,7 +10,9 @@ const roundSchema = new Schema({
   },
   score: { type: Number, required: false },
   remarks: { type: String, required: false },
-  status: { type: String, required: false, default: 'pending' }
+  status: { type: String, required: false, default: 'pending' },
+  callId: { type: String, required: false },      // Vapi call ID for knowledge-based interviews
+  transcript: { type: String, required: false }   // Transcript from the Vapi call
 }, { _id: false });
 
 const interviewSchema = new Schema({

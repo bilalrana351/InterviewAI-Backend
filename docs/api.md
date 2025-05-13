@@ -69,7 +69,9 @@ Below are the data models used throughout the API:
       "type": "string (enum: Coding, FrameworkSpecific, SystemDesign, Behavioural, KnowledgeBased)",
       "score": "number (optional)",
       "remarks": "string (optional)",
-      "status": "string (optional)"
+      "status": "string (optional)",
+      "callId": "string (optional)",
+      "transcript": "string (optional)"
     }
   ]
 }
@@ -1278,3 +1280,85 @@ The system requires all input and output to be sent as strings, even for numeric
 3. Use consistent formatting for input/output
 4. Handle edge cases (empty input, large numbers, etc.)
 5. Consider precision for floating-point numbers
+
+## Interview Voice Transcription
+
+The system supports knowledge-based interviews conducted via voice calls using Vapi. These calls are recorded, transcribed, and the transcripts are stored in the database.
+
+### Associate Call ID with Interview Round
+
+*   **URL**: `/api/interviews/:id/associate-call`
+*   **Method**: `POST`
+*   **Auth Required**: Yes
+*   **Description**: Associates a Vapi call ID with a specific knowledge-based interview round.
+
+*   **URL Parameters**:
+    *   `id`: Interview ID
+
+*   **Body Parameters**:
+    ```json
+    {
+      "callId": "string - Vapi call ID",
+      "roundIndex": "number - Index of the knowledge-based round in the interview.rounds array"
+    }
+    ```
+
+*   **Success Response**:
+    *   **Code**: `200 OK`
+    *   **Content**:
+    ```json
+    {
+      "success": true,
+      "message": "Call ID associated with knowledge-based interview round",
+      "data": {
+        "type": "KnowledgeBased",
+        "status": "in-progress",
+        "callId": "string - Vapi call ID"
+      }
+    }
+    ```
+
+*   **Error Responses**:
+    *   `400 Bad Request` - Missing fields or invalid round
+    *   `404 Not Found` - Interview not found
+    *   `500 Internal Server Error` - Server error
+
+### End-of-Call Report Webhook
+
+*   **URL**: `/api/end-of-call-report`
+*   **Method**: `POST`
+*   **Auth Required**: No (webhook from Vapi)
+*   **Description**: Receives the transcript and summary from Vapi when a call ends, and updates the associated interview round.
+
+*   **Body Parameters**:
+    ```json
+    {
+      "message": {
+        "type": "end-of-call-report",
+        "call": {
+          "id": "string - Vapi call ID"
+        },
+        "transcript": "string - Full transcript of the call",
+        "summary": "string (optional) - Summary of the call"
+      }
+    }
+    ```
+
+*   **Success Response**:
+    *   **Code**: `200 OK`
+    *   **Content**:
+    ```json
+    {
+      "success": true,
+      "message": "End of call report received successfully"
+    }
+    ```
+
+*   **Error Responses**:
+    *   `400 Bad Request` - Invalid request format
+    *   `500 Internal Server Error` - Server error
+
+*   **Notes**:
+    * The endpoint will find the interview round with the matching call ID and update its transcript and status.
+    * If a summary is provided, it will be added to the remarks field.
+    * The round status will be updated to "completed".

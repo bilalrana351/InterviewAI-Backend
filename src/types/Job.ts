@@ -14,6 +14,8 @@ export interface Round {
   score?: number;
   remarks?: string;
   status?: string;
+  callId?: string;        // Vapi call ID for knowledge-based interviews
+  transcript?: string;    // Transcript from the Vapi call
 }
 
 export interface IJob extends Document {
