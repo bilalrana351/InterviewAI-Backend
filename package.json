@@ -11,7 +11,8 @@
     "dev": "nodemon --exec npx ts-node src/index.ts",
     "worker": "ts-node src/workers/codeEvaluation.worker.ts",
     "dev:all": "concurrently \"npm run dev\" \"npm run worker\"",
-    "start:all": "concurrently \"npm run start:server\" \"npm run start:worker\""
+    "start:all": "concurrently \"npm run start:server\" \"npm run start:worker\"",
+    "tunnel": "cloudflared tunnel --url http://localhost:5000"
   },
   "keywords": [],
   "author": "",

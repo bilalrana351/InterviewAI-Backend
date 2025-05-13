@@ -27,7 +27,7 @@ const app = express();
 const PORT = process.env.PORT || DEFAULT_PORT;
 app.use(
   cors({
-    origin: ["https://interview-ai-client-nine.vercel.app","http://localhost:5173"],
+    origin: ["https://interview-ai-client-nine.vercel.app","http://localhost:5173","*"],
     credentials: true,
   })
 );
@@ -122,6 +122,48 @@ app.get("/health/db", async (req: express.Request, res: express.Response) => {
   });
 });
 
+
+// End of call report endpoint
+app.post('/api/end-of-call-report', (req, res) => {
+  try {
+    const { message } = req.body;
+    
+    // Log the raw incoming message for debugging
+    console.log('Received payload:', JSON.stringify(req.body, null, 2));
+    
+    // Validate required fields
+    if (!message || message.type !== 'end-of-call-report') {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid request format'
+      });
+    }
+
+    // Log the end of call report details
+    console.log('End of Call Report Received:');
+    console.log('Ended Reason:', message.endedReason);
+    console.log('Recording URL:', message.recordingUrl);
+    console.log('Summary:', message.summary);
+    console.log('Messages:', message.messages ? message.messages.length : 0, 'messages received');
+
+    console.log("\n\n")
+    console.log("this is the transcript:\n")
+    console.log(message.transcript)
+
+    // Send success response
+    res.status(200).json({
+      success: true,
+      message: 'End of call report received successfully'
+    });
+  } catch (error) {
+    // Error handling
+    console.error('Error processing end of call report:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+    });
+  }
+});
 app.use(requireAuth);
 
 app.use("/api/users", userRoutes);
