@@ -27,7 +27,7 @@ const app = express();
 const PORT = process.env.PORT || DEFAULT_PORT;
 app.use(
   cors({
-    origin: "https://interview-ai-client-nine.vercel.app",
+    origin: ["https://interview-ai-client-nine.vercel.app","http://localhost:5173"],
     credentials: true,
   })
 );
