@@ -125,6 +125,7 @@ app.get("/health/db", async (req: express.Request, res: express.Response) => {
 
 // Associate Vapi call ID with knowledge-based interview round
 app.post('/api/interviews/:id/associate-call', async (req, res) => {
+  console.log("I am in the associate call endpoint");
   try {
     const { id } = req.params;
     const { callId, roundIndex } = req.body;
@@ -204,6 +205,7 @@ app.post('/api/end-of-call-report', async (req, res) => {
       const interview = await Interview.findOne({
         "rounds.callId": callId
       });
+      console.log("we found the Interview associated with the call ID:", interview);
 
       if (interview) {
         // Find the index of the round with this call ID
