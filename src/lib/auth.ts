@@ -28,8 +28,7 @@ export const auth = betterAuth({
     defaultCookieAttributes: {
       secure: true,
       sameSite: "none",
-      path: "/",
-      partitioned: true
+      path: "/"
     }
   },
   trustedOrigins: [clientURL],
