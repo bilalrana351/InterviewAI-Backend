@@ -21,6 +21,7 @@ import {
 } from "./middlewares/auth.middleware";
 import { systemDesignRoutes } from "./routes/SystemDesign";
 import { cvRoutes } from "./routes/CvUploadAndParse";
+import { Interview } from "./models/Interview";
 
 const configService = new ConfigService();
 const app = express();
@@ -122,6 +123,128 @@ app.get("/health/db", async (req: express.Request, res: express.Response) => {
   });
 });
 
+// Associate Vapi call ID with knowledge-based interview round
+app.post('/api/interviews/:id/associate-call', async (req, res) => {
+  console.log("I am in the associate call endpoint");
+  try {
+    const { id } = req.params;
+    const { callId, roundIndex } = req.body;
+    
+    if (!id || !callId || roundIndex === undefined) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: interviewId, callId, or roundIndex'
+      });
+    }
+
+    // Find the interview and update the specified round with the call ID
+    const interview = await Interview.findById(id);
+    
+    if (!interview) {
+      return res.status(404).json({
+        success: false,
+        error: 'Interview not found'
+      });
+    }
+
+    // Check if the round exists and is a knowledge-based round
+    if (!interview.rounds[roundIndex] || interview.rounds[roundIndex].type !== 'KnowledgeBased') {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid round index or round is not a knowledge-based interview'
+      });
+    }
+
+    // Update the round with the call ID
+    interview.rounds[roundIndex].callId = callId;
+    interview.rounds[roundIndex].status = 'in-progress';
+    
+    await interview.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Call ID associated with knowledge-based interview round',
+      data: interview.rounds[roundIndex]
+    });
+  } catch (error) {
+    console.error('Error associating call ID with interview:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to associate call ID with interview'
+    });
+  }
+});
+
+// End of call report endpoint
+app.post('/api/end-of-call-report', async (req, res) => {
+  try {
+    const { message } = req.body;
+    
+    // Log the raw incoming message for debugging
+    // console.log('Received payload:', JSON.stringify(req.body, null, 2));
+    
+    // Validate required fields
+    if (!message || message.type !== 'end-of-call-report') {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid request format'
+      });
+    }
+
+    console.log('End of Call Report Received:');
+    console.log("Call ID:", message.call?.id);
+    console.log("\n\n");
+    console.log("Transcript:\n");
+    console.log(message.transcript);
+
+    // If there's a call ID, try to find the associated interview round and update it
+    if (message.call?.id) {
+      const callId = message.call.id;
+      
+      // Find interview with a round that has this call ID
+      const interview = await Interview.findOne({
+        "rounds.callId": callId
+      });
+      console.log("we found the Interview associated with the call ID:", interview);
+
+      if (interview) {
+        // Find the index of the round with this call ID
+        const roundIndex = interview.rounds.findIndex(round => round.callId === callId);
+        
+        if (roundIndex !== -1) {
+          // Update the round with the transcript and mark as completed
+          interview.rounds[roundIndex].transcript = message.transcript;
+          interview.rounds[roundIndex].status = 'completed';
+          
+          // If there's a summary, add it to remarks
+          if (message.summary) {
+            interview.rounds[roundIndex].remarks = message.summary;
+          }
+          
+          await interview.save();
+          
+          console.log(`Successfully updated interview ${interview._id} with transcript for round ${roundIndex}`);
+        }
+      } else {
+        console.log(`No interview found with call ID: ${callId}`);
+      }
+    }
+
+    // Send success response
+    res.status(200).json({
+      success: true,
+      message: 'End of call report received successfully'
+    });
+  } catch (error) {
+    // Error handling
+    console.error('Error processing end of call report:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+    });
+  }
+});
+
 app.use(requireAuth);
 
 app.use("/api/users", userRoutes);
@@ -153,5 +276,4 @@ async function startServer() {
     process.exit(1);
   }
 }
-
 startServer();
