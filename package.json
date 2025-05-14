@@ -31,6 +31,7 @@
     "mongodb": "^5.7.0",
     "mongoose": "^7.5.0",
     "on-finished": "^2.4.1",
+    "openai": "^4.98.0",
     "uuid": "^9.0.0"
   },
   "devDependencies": {

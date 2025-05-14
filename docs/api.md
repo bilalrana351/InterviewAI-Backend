@@ -1328,7 +1328,7 @@ The system supports knowledge-based interviews conducted via voice calls using V
 *   **URL**: `/api/end-of-call-report`
 *   **Method**: `POST`
 *   **Auth Required**: No (webhook from Vapi)
-*   **Description**: Receives the transcript and summary from Vapi when a call ends, and updates the associated interview round.
+*   **Description**: Receives the transcript and summary from Vapi when a call ends, evaluates the interviewee's responses using OpenAI structured output, and updates the associated interview round with the transcript, score, and detailed feedback.
 
 *   **Body Parameters**:
     ```json
@@ -1360,5 +1360,14 @@ The system supports knowledge-based interviews conducted via voice calls using V
 
 *   **Notes**:
     * The endpoint will find the interview round with the matching call ID and update its transcript and status.
-    * If a summary is provided, it will be added to the remarks field.
-    * The round status will be updated to "completed".
+    * The transcript is sent to OpenAI for structured evaluation of the interviewee's responses using function calling.
+    * OpenAI provides:
+      * A numerical score out of 10
+      * Detailed feedback on the candidate's performance
+      * A list of key strengths identified in the candidate's responses
+      * A list of areas where the candidate could improve
+    * The round is updated with:
+      * The numerical score
+      * Formatted remarks that include the general feedback, key strengths, and areas for improvement
+      * Status set to "completed"
+    * The evaluation considers the job role the candidate is interviewing for to provide context-aware assessment.

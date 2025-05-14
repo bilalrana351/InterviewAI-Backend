@@ -22,6 +22,8 @@ import {
 import { systemDesignRoutes } from "./routes/SystemDesign";
 import { cvRoutes } from "./routes/CvUploadAndParse";
 import { Interview } from "./models/Interview";
+import { Job } from "./models/Job";
+import OpenAI from "openai";
 
 const configService = new ConfigService();
 const app = express();
@@ -214,16 +216,47 @@ app.post('/api/end-of-call-report', async (req, res) => {
         if (roundIndex !== -1) {
           // Update the round with the transcript and mark as completed
           interview.rounds[roundIndex].transcript = message.transcript;
+          
+          // Get the job details to provide context for the evaluation
+          const job = await Job.findById(interview.job_id);
+          
+          // Evaluate the transcript with OpenAI
+          const evaluationResult = await evaluateTranscriptWithOpenAI(message.transcript, job?.role || "");
+          
+          // Update interview with score and feedback from OpenAI
+          interview.rounds[roundIndex].score = evaluationResult.score;
+          
+          // Create detailed remarks with feedback and lists of strengths/improvements
+          let detailedRemarks = evaluationResult.feedback + "\n\n";
+          
+          if (evaluationResult.keyStrengths && evaluationResult.keyStrengths.length > 0) {
+            detailedRemarks += "Key Strengths:\n";
+            evaluationResult.keyStrengths.forEach((strength: string, index: number) => {
+              detailedRemarks += `${index + 1}. ${strength}\n`;
+            });
+            detailedRemarks += "\n";
+          }
+          
+          if (evaluationResult.areasForImprovement && evaluationResult.areasForImprovement.length > 0) {
+            detailedRemarks += "Areas for Improvement:\n";
+            evaluationResult.areasForImprovement.forEach((area: string, index: number) => {
+              detailedRemarks += `${index + 1}. ${area}\n`;
+            });
+          }
+          
+          interview.rounds[roundIndex].remarks = detailedRemarks;
           interview.rounds[roundIndex].status = 'completed';
           
-          // If there's a summary, add it to remarks
-          if (message.summary) {
-            interview.rounds[roundIndex].remarks = message.summary;
-          }
+          // Store the raw evaluation data for potential future use
+          (interview.rounds[roundIndex] as any).evaluationData = {
+            keyStrengths: evaluationResult.keyStrengths || [],
+            areasForImprovement: evaluationResult.areasForImprovement || []
+          };
           
           await interview.save();
           
-          console.log(`Successfully updated interview ${interview._id} with transcript for round ${roundIndex}`);
+          console.log(`Successfully updated interview ${interview._id} with transcript and evaluation for round ${roundIndex}`);
+          console.log(`Evaluation score: ${evaluationResult.score}/10`);
         }
       } else {
         console.log(`No interview found with call ID: ${callId}`);
@@ -244,6 +277,112 @@ app.post('/api/end-of-call-report', async (req, res) => {
     });
   }
 });
+
+/**
+ * Evaluates the interview transcript using OpenAI
+ * @param transcript - The full transcript of the interview
+ * @param jobRole - The role the candidate is interviewing for
+ * @returns Object with score and feedback
+ */
+async function evaluateTranscriptWithOpenAI(transcript: string, jobRole: string) {
+  try {
+    // Make sure the OpenAI API key is set
+    const openaiApiKey = process.env.OPENAI_API_KEY;
+    if (!openaiApiKey) {
+      console.error("OpenAI API key is not set in environment variables");
+      return { score: 0, feedback: "Could not evaluate due to missing API key" };
+    }
+
+    // Initialize the OpenAI client
+    const openai = new OpenAI({
+      apiKey: openaiApiKey,
+    });
+
+    // Call OpenAI API with structured output
+    const response = await openai.chat.completions.create({
+      model: "gpt-4-turbo",
+      messages: [
+        {
+          role: "system",
+          content: `You are an expert technical interviewer evaluating candidates. 
+                   You need to evaluate the candidate's responses in the interview transcript.
+                   Focus on the accuracy, depth, and clarity of their answers.
+                   The candidate is interviewing for a ${jobRole} position.
+                   Provide your evaluation in JSON format.`
+        },
+        {
+          role: "user",
+          content: `Here is the interview transcript. Evaluate the candidate's answers.
+                   Your response must be in valid JSON format.
+      
+                   Transcript:
+                   ${transcript}`
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 1000,
+      response_format: { type: "json_object" },
+      function_call: { name: "evaluate_candidate" },
+      functions: [
+        {
+          name: "evaluate_candidate", 
+          description: "Evaluate the candidate's interview performance based on their answers",
+          parameters: {
+            type: "object",
+            properties: {
+              score: {
+                type: "number",
+                description: "A numerical score out of 10 evaluating the candidate's performance"
+              },
+              feedback: {
+                type: "string",
+                description: "Brief but specific feedback about their strengths and areas for improvement"
+              },
+              keyStrengths: {
+                type: "array",
+                items: {
+                  type: "string"
+                },
+                description: "List of key strengths identified in the candidate's responses"
+              },
+              areasForImprovement: {
+                type: "array",
+                items: {
+                  type: "string"
+                },
+                description: "List of areas where the candidate could improve"
+              }
+            },
+            required: ["score", "feedback"]
+          }
+        }
+      ]
+    });
+
+    // Access the structured response
+    const functionCall = response.choices[0].message.function_call;
+    
+    if (!functionCall || !functionCall.arguments) {
+      console.error("OpenAI didn't return the expected function call format");
+      return { score: 5, feedback: "Error processing evaluation" };
+    }
+
+    // Parse the function arguments which contains our structured data
+    const evaluationData = JSON.parse(functionCall.arguments);
+    console.log("OpenAI structured evaluation:", evaluationData);
+    
+    return {
+      score: evaluationData.score,
+      feedback: evaluationData.feedback,
+      keyStrengths: evaluationData.keyStrengths || [],
+      areasForImprovement: evaluationData.areasForImprovement || []
+    };
+    
+  } catch (error) {
+    console.error("Error evaluating transcript with OpenAI:", error);
+    return { score: 0, feedback: "Error occurred during evaluation" };
+  }
+}
 
 app.use(requireAuth);
 
