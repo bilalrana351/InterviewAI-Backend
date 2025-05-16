@@ -30,3 +30,4 @@ jobs:
         touch .env
         echo "${{ secrets.PROD_ENV }}" > .env
     - run: pm2 restart NodeApi
+    - run: pm2 restart Worker
