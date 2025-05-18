@@ -745,6 +745,30 @@ Assume the base URL for all endpoints is `/api`.
     *   `404 Not Found` (e.g., `INTERVIEW_NOT_FOUND`)
     *   `500 Internal Server Error` (e.g., `INTERNAL_SERVER_ERROR`)
 
+### PUT /interviews/:id/violations
+
+*   **Description**: Records a single new violation for an interview.
+*   **Access**: Private (Authenticated User - typically called by automated detection on the client-side during an interview session)
+*   **Request Body**:
+    ```json
+    {
+      "violation": {
+        "type": "string (enum: COPY_PASTE, SNAP_MODE, TAB_SWITCH)",
+        "timestamp": "string (ISO 8601 format, e.g., YYYY-MM-DDTHH:mm:ss.sssZ)"
+      }
+    }
+    ```
+*   **Success Response**: `200 OK`
+    ```json
+    {
+      "status": "success"
+    }
+    ```
+*   **Error Responses**:
+    *   `400 Bad Request` (e.g., `INVALID_ID`, `INVALID_VIOLATION_FORMAT`, `INVALID_VIOLATION_TYPE`, `INVALID_VIOLATION_TIMESTAMP`)
+    *   `404 Not Found` (e.g., `INTERVIEW_NOT_FOUND`)
+    *   `500 Internal Server Error` (e.g., `INTERNAL_SERVER_ERROR`, `Failed to update interview violations`)
+
 ### PUT /interviews/:id/evaluate-final
 
 *   **Description**: Evaluates the final interview score based on all completed rounds, job details, and candidate CV.

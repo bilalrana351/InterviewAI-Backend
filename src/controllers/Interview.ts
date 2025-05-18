@@ -8,6 +8,7 @@ import { User } from '../models/User';
 import mongoose from 'mongoose';
 import { aiService } from '../services/ai.service';
 import { FinalInterviewRequest } from '../types/Interview';
+import { VIOLATION_TYPES } from '../constants/Interview';
 
 // GET /api/interviews - Get all interviews for the user
 export const getAllInterviews = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
@@ -478,6 +479,84 @@ export const updateInterviewRounds = async (req: AuthenticatedRequest, res: Resp
     res.status(500).json({
       status: 'error',
       message: 'Failed to update interview rounds'
+    });
+  }
+};
+
+export const updateInterviewViolations = async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
+  try {
+    const { id: interviewId } = req.params;
+    const { violation: newViolation } = req.body; // Expect a single violation object
+
+    // Validate interviewId
+    if (!mongoose.Types.ObjectId.isValid(interviewId)) {
+      return res.status(400).json({
+        status: 'error',
+        code: 'INVALID_ID',
+        message: 'Invalid interview ID format'
+      });
+    }
+
+    // Find the interview
+    const interview = await Interview.findById(interviewId);
+    if (!interview) {
+      return res.status(404).json({
+        status: 'error',
+        code: 'INTERVIEW_NOT_FOUND',
+        message: 'Interview not found'
+      });
+    }
+
+    // Validate newViolation object and its properties
+    if (!newViolation || typeof newViolation !== 'object') {
+      return res.status(400).json({
+        status: 'error',
+        code: 'INVALID_VIOLATION_FORMAT',
+        message: 'Violation data must be an object'
+      });
+    }
+
+    if (!newViolation.type || !VIOLATION_TYPES.includes(newViolation.type)) {
+      return res.status(400).json({
+        status: 'error',
+        code: 'INVALID_VIOLATION_TYPE',
+        message: `Invalid violation type: ${newViolation.type}. Must be one of ${VIOLATION_TYPES.join(', ')}`
+      });
+    }
+
+    if (!newViolation.timestamp || isNaN(new Date(newViolation.timestamp).getTime())) {
+      return res.status(400).json({
+        status: 'error',
+        code: 'INVALID_VIOLATION_TIMESTAMP',
+        message: `Invalid timestamp for violation. Must be a valid date string.`
+      });
+    }
+
+    const validatedViolation = {
+      type: newViolation.type,
+      timestamp: new Date(newViolation.timestamp)
+    };
+
+    // Append the new validated violation to the existing ones
+    interview.violations.push(validatedViolation);
+    
+    await interview.save();
+
+    res.status(200).json({
+      status: 'success'
+    });
+
+  } catch (error) {
+    console.error('Error updating interview violations:', error);
+    if (error instanceof mongoose.Error.ValidationError) {
+      return res.status(400).json({
+        status: 'error',
+        message: error.message
+      });
+    }
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to update interview violations'
     });
   }
 };

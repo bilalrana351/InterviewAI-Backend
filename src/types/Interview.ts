@@ -1,6 +1,12 @@
 import { IJob, Round } from "./Job";
 import { Document } from "mongoose";
 import { IUser } from "./User";
+import { VIOLATION_TYPES } from "../constants/Interview";
+
+export interface Violation {
+  type: (typeof VIOLATION_TYPES)[number];
+  timestamp: Date;
+}
 
 export interface IInterview extends Document {
   job_id: IJob['_id'];
@@ -11,6 +17,7 @@ export interface IInterview extends Document {
   score: number;
   remarks: string;
   status: string;
+  violations: Violation[];
 }
 
 /**
