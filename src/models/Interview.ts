@@ -1,7 +1,7 @@
 import mongoose, { Schema } from 'mongoose';
 import { IInterview } from '../types/Interview';
 import { RoundType } from '../types/Job';
-
+import { VIOLATION_TYPES } from '../constants/Interview';
 const roundSchema = new Schema({
   type: { 
     type: String, 
@@ -15,6 +15,15 @@ const roundSchema = new Schema({
   transcript: { type: String, required: false }   // Transcript from the Vapi call
 }, { _id: false });
 
+const violationSchema = new Schema({
+  type: { 
+    type: String, 
+    enum: VIOLATION_TYPES,
+    required: true 
+  },
+  timestamp: { type: Date, required: true }
+}, { _id: false });
+
 const interviewSchema = new Schema({
   job_id: { type: Schema.Types.ObjectId, ref: 'Job', required: true },
   user_id: { type: Schema.Types.ObjectId, ref: 'User', required: true },
@@ -23,6 +32,7 @@ const interviewSchema = new Schema({
   rounds: { type: [roundSchema], required: true, default: [] },
   score: { type: Number, required: false },
   remarks: { type: String, required: false },
+  violations: { type: [violationSchema], required: false, default: [] },
   status: { type: String, required: false, default: 'pending' }
 });
 

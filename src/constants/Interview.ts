@@ -1,0 +1,1 @@
+export const VIOLATION_TYPES = ['COPY_PASTE', 'SNAP_MODE', 'TAB_SWITCH'] as const;

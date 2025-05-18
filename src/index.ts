@@ -379,7 +379,7 @@ async function evaluateTranscriptWithOpenAI(transcript: string, jobRole: string)
     };
     
   } catch (error) {
-    console.error("Error evaluating transcript with OpenAI:", error);
+    console.error("Error evaluating transcript with Open AI:", error);
     return { score: 0, feedback: "Error occurred during evaluation" };
   }
 }
